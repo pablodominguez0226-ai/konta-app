@@ -1,0 +1,368 @@
+{% extends "base.html" %}
+
+{% block title %}Catálogo & Stock | productos.bona{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+
+  <!-- HEADER -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-black text-white tracking-tight flex items-center gap-2">
+        <i class="fa-solid fa-boxes-stacked text-purple-400"></i>
+        <span>Catálogo Multirrubro & Control de Stock</span>
+      </h1>
+      <p class="text-xs sm:text-sm text-slate-400">Administrá precios, costos de reposición, márgenes y niveles de stock</p>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <a href="/excel" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-700 text-xs font-semibold text-emerald-400 shadow-sm transition">
+        <i class="fa-solid fa-file-excel text-sm"></i>
+        <span>Importar / Exportar</span>
+      </a>
+      <button onclick="openModal('newProductModal')" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md shadow-purple-600/30 transition active:scale-95">
+        <i class="fa-solid fa-plus"></i>
+        <span>Nuevo Producto</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- SUMMARY CARDS -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <div class="p-4 bg-slate-900 border border-slate-800 rounded-2xl">
+      <div class="text-[11px] text-slate-400 font-medium">Variedad de Productos</div>
+      <div class="text-xl font-black text-white mt-1" id="statTotalProds">0</div>
+    </div>
+    <div class="p-4 bg-slate-900 border border-slate-800 rounded-2xl">
+      <div class="text-[11px] text-slate-400 font-medium">Valuación a Costo</div>
+      <div class="text-xl font-black text-amber-400 mt-1" id="statCostVal">$ 0</div>
+    </div>
+    <div class="p-4 bg-slate-900 border border-slate-800 rounded-2xl">
+      <div class="text-[11px] text-slate-400 font-medium">Valuación a Venta</div>
+      <div class="text-xl font-black text-emerald-400 mt-1" id="statSaleVal">$ 0</div>
+    </div>
+    <div class="p-4 bg-slate-900 border border-slate-800 rounded-2xl">
+      <div class="text-[11px] text-slate-400 font-medium">Stock Crítico</div>
+      <div class="text-xl font-black text-rose-400 mt-1" id="statLowStock">0</div>
+    </div>
+  </div>
+
+  <!-- FILTERS & SEARCH -->
+  <div class="flex flex-col sm:flex-row gap-3">
+    <div class="relative flex-1">
+      <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+      <input type="text" id="invSearch" placeholder="Buscar por nombre, rubro o SKU..." oninput="filterInventory()" class="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-purple-500">
+    </div>
+    <select id="invCatFilter" onchange="filterInventory()" class="px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-purple-500">
+      <option value="">Todos los Rubros / Categorías</option>
+      <!-- Categorias via JS -->
+    </select>
+  </div>
+
+  <!-- PRODUCTS TABLE -->
+  <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-slate-950/80 text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800 font-bold">
+          <tr>
+            <th class="py-3 px-4">SKU / Código</th>
+            <th class="py-3 px-4">Producto</th>
+            <th class="py-3 px-4">Rubro / Categoría</th>
+            <th class="py-3 px-4 text-right">Costo Unit.</th>
+            <th class="py-3 px-4 text-right">Precio Venta</th>
+            <th class="py-3 px-4 text-right">Margen Estimado</th>
+            <th class="py-3 px-4 text-center">Stock Actual</th>
+            <th class="py-3 px-4 text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-800/80" id="inventoryTableBody">
+          <!-- Renderizado vía JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL: CREAR PRODUCTO -->
+<div id="newProductModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+  <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+    <button onclick="closeModal('newProductModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+      <i class="fa-solid fa-xmark text-lg"></i>
+    </button>
+    <div class="flex items-center gap-3 mb-5">
+      <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center text-lg">
+        <i class="fa-solid fa-box-open"></i>
+      </div>
+      <div>
+        <h3 class="text-lg font-bold text-white">Nuevo Producto</h3>
+        <p class="text-xs text-slate-400">Sumalo al catálogo multirrubro de productos.bona</p>
+      </div>
+    </div>
+    <form id="newProductForm" onsubmit="handleCreateProduct(event)" class="space-y-3.5">
+      <div>
+        <label class="block text-xs font-medium text-slate-300 mb-1">Nombre del Producto</label>
+        <input type="text" id="newProdName" required placeholder="Ej: Limpiador Spray Pisos 1L" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs focus:outline-none focus:border-purple-500">
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">SKU / Código</label>
+          <input type="text" id="newProdSku" placeholder="BONA-001" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs focus:outline-none focus:border-purple-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Rubro / Categoría</label>
+          <select id="newProdCategory" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs focus:outline-none focus:border-purple-500">
+            <!-- Categorías vía JS -->
+          </select>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Costo Unitario ($)</label>
+          <input type="number" step="10" min="0" id="newProdCost" required placeholder="0.00" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white font-bold text-xs focus:outline-none focus:border-purple-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Precio Venta Sugerido ($)</label>
+          <input type="number" step="10" min="0" id="newProdPrice" required placeholder="0.00" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white font-bold text-xs focus:outline-none focus:border-purple-500">
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Stock Inicial</label>
+          <input type="number" min="0" id="newProdStock" value="10" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white font-bold text-xs focus:outline-none focus:border-purple-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Alerta Stock Mínimo</label>
+          <input type="number" min="1" id="newProdMinStock" value="5" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white font-bold text-xs focus:outline-none focus:border-purple-500">
+        </div>
+      </div>
+      <div class="pt-2 flex gap-3">
+        <button type="button" onclick="closeModal('newProductModal')" class="flex-1 py-2.5 rounded-xl border border-slate-700 text-slate-300 text-xs font-medium hover:bg-slate-800 transition">Cancelar</button>
+        <button type="submit" class="flex-1 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs shadow-lg shadow-purple-600/30 transition active:scale-95">Guardar Producto</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let inventoryProducts = [];
+let inventoryCategories = [];
+
+async function reloadInventory() {
+  try {
+    const [pRes, cRes] = await Promise.all([
+      fetch('/api/products?active_only=false'),
+      fetch('/api/categories')
+    ]);
+    inventoryProducts = await pRes.json();
+    inventoryCategories = await cRes.json();
+
+    populateCategoryDropdowns();
+    calculateInventoryStats();
+    filterInventory();
+  } catch (err) {
+    console.error("Error cargando inventario:", err);
+  }
+}
+
+function populateCategoryDropdowns() {
+  const filterSel = document.getElementById('invCatFilter');
+  const newSel = document.getElementById('newProdCategory');
+  
+  if (filterSel) {
+    filterSel.innerHTML = '<option value="">Todos los Rubros / Categorías</option>';
+    inventoryCategories.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = c.name;
+      filterSel.appendChild(opt);
+    });
+  }
+
+  if (newSel) {
+    newSel.innerHTML = '';
+    inventoryCategories.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = c.name;
+      newSel.appendChild(opt);
+    });
+  }
+}
+
+function calculateInventoryStats() {
+  let costVal = 0;
+  let saleVal = 0;
+  let lowStockCount = 0;
+
+  inventoryProducts.forEach(p => {
+    costVal += (p.cost_price * p.stock_quantity);
+    saleVal += (p.sale_price * p.stock_quantity);
+    if (p.stock_quantity <= p.min_stock_alert) lowStockCount++;
+  });
+
+  document.getElementById('statTotalProds').textContent = inventoryProducts.length;
+  document.getElementById('statCostVal').textContent = formatMoney(costVal);
+  document.getElementById('statSaleVal').textContent = formatMoney(saleVal);
+  document.getElementById('statLowStock').textContent = lowStockCount;
+}
+
+function filterInventory() {
+  const search = document.getElementById('invSearch').value.toLowerCase().trim();
+  const catId = document.getElementById('invCatFilter').value;
+
+  let filtered = inventoryProducts;
+  if (catId) {
+    filtered = filtered.filter(p => p.category_id === parseInt(catId));
+  }
+  if (search) {
+    filtered = filtered.filter(p => 
+      p.name.toLowerCase().includes(search) || 
+      (p.sku && p.sku.toLowerCase().includes(search))
+    );
+  }
+
+  renderInventoryTable(filtered);
+}
+
+function renderInventoryTable(products) {
+  const tbody = document.getElementById('inventoryTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  if (products.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" class="py-10 text-center text-slate-500">No se encontraron productos.</td></tr>`;
+    return;
+  }
+
+  products.forEach(p => {
+    const cat = inventoryCategories.find(c => c.id === p.category_id);
+    const catName = cat ? cat.name : 'General';
+
+    const isLowStock = p.stock_quantity <= p.min_stock_alert;
+    let stockClass = "text-emerald-400 font-bold";
+    if (p.stock_quantity <= 0) stockClass = "text-rose-400 font-extrabold";
+    else if (isLowStock) stockClass = "text-amber-400 font-bold";
+
+    const tr = document.createElement('tr');
+    tr.className = "hover:bg-slate-800/40 transition";
+    tr.innerHTML = `
+      <td class="py-3 px-4 font-mono text-slate-400">${p.sku || '-'}</td>
+      <td class="py-3 px-4 font-bold text-white">${p.name}</td>
+      <td class="py-3 px-4 text-slate-300">
+        <span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-300 border border-slate-700">${catName}</span>
+      </td>
+      <td class="py-3 px-4 text-right text-slate-400 font-medium">${formatMoney(p.cost_price)}</td>
+      <td class="py-3 px-4 text-right text-white font-extrabold">${formatMoney(p.sale_price)}</td>
+      <td class="py-3 px-4 text-right">
+        <span class="text-teal-400 font-bold">+${formatMoney(p.estimated_unit_margin)}</span>
+        <span class="text-[9px] text-slate-500">(${p.estimated_margin_pct}%)</span>
+      </td>
+      <td class="py-3 px-4 text-center">
+        <div class="inline-flex items-center gap-1.5 bg-slate-950 border border-slate-800 rounded-lg px-2 py-1">
+          <button onclick="quickAdjustStock(${p.id}, -1)" class="w-5 h-5 rounded hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+            <i class="fa-solid fa-minus text-[9px]"></i>
+          </button>
+          <span class="w-8 text-center text-xs ${stockClass}">${p.stock_quantity}</span>
+          <button onclick="quickAdjustStock(${p.id}, 1)" class="w-5 h-5 rounded hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+            <i class="fa-solid fa-plus text-[9px]"></i>
+          </button>
+        </div>
+      </td>
+      <td class="py-3 px-4 text-center">
+        <button onclick="quickEditPrice(${p.id}, ${p.sale_price}, ${p.cost_price})" title="Editar precios" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+          <i class="fa-solid fa-pen text-xs"></i>
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+async function quickAdjustStock(prodId, diff) {
+  try {
+    const res = await fetch(`/api/products/${prodId}/stock`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ diff: diff })
+    });
+    if (res.ok) {
+      const p = inventoryProducts.find(x => x.id === prodId);
+      if (p) p.stock_quantity += diff;
+      calculateInventoryStats();
+      filterInventory();
+    }
+  } catch (err) {
+    showToast('Error al actualizar stock', 'error');
+  }
+}
+
+async function quickEditPrice(prodId, currentSale, currentCost) {
+  const newSale = prompt('Nuevo Precio de Venta Sugerido ($):', currentSale);
+  if (newSale === null) return;
+  const newCost = prompt('Nuevo Costo Unitario de Reposición ($):', currentCost);
+  if (newCost === null) return;
+
+  try {
+    const res = await fetch(`/api/products/${prodId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sale_price: parseFloat(newSale) || 0,
+        cost_price: parseFloat(newCost) || 0
+      })
+    });
+    if (res.ok) {
+      showToast('Precios actualizados exitosamente ✅', 'success');
+      reloadInventory();
+    }
+  } catch (err) {
+    showToast('Error al editar producto', 'error');
+  }
+}
+
+async function handleCreateProduct(e) {
+  e.preventDefault();
+  const name = document.getElementById('newProdName').value.trim();
+  const sku = document.getElementById('newProdSku').value.trim() || null;
+  const cat_id = parseInt(document.getElementById('newProdCategory').value) || null;
+  const cost = parseFloat(document.getElementById('newProdCost').value) || 0;
+  const price = parseFloat(document.getElementById('newProdPrice').value) || 0;
+  const stock = parseInt(document.getElementById('newProdStock').value) || 0;
+  const min_stock = parseInt(document.getElementById('newProdMinStock').value) || 5;
+
+  try {
+    const res = await fetch('/api/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        sku,
+        category_id: cat_id,
+        cost_price: cost,
+        sale_price: price,
+        stock_quantity: stock,
+        min_stock_alert: min_stock
+      })
+    });
+    if (res.ok) {
+      showToast('¡Producto sumado al catálogo con éxito! 📦', 'success');
+      closeModal('newProductModal');
+      document.getElementById('newProductForm').reset();
+      reloadInventory();
+    } else {
+      const err = await res.json();
+      showToast(err.detail || 'Error al crear producto', 'error');
+    }
+  } catch (err) {
+    showToast('Error de red al guardar producto', 'error');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  reloadInventory();
+});
+</script>
+{% endblock %}

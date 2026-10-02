@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Centro de Importación & Exportación Excel | productos.bona{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+
+  <!-- HEADER -->
+  <div>
+    <h1 class="text-2xl font-black text-white tracking-tight flex items-center gap-2">
+      <i class="fa-solid fa-file-excel text-emerald-400"></i>
+      <span>Reemplazo de Excel & Migración de Datos</span>
+    </h1>
+    <p class="text-xs sm:text-sm text-slate-400">Exportá reportes oficiales en .xlsx con fórmulas o migrá tus planillas existentes</p>
+  </div>
+
+  <!-- EXPORT SECTION (CARDS) -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <!-- Reporte Financiero Completo -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between space-y-4">
+      <div class="space-y-2">
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">
+          <i class="fa-solid fa-book-bookmark"></i>
+        </div>
+        <h3 class="text-base font-bold text-white">Libro Contable Integral</h3>
+        <p class="text-xs text-slate-400">Genera un archivo Excel multipestaña: Resumen Ejecutivo, Ventas, Gastos y Valuación de Stock.</p>
+      </div>
+      <a href="/api/export/financial-report" class="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 transition">
+        <i class="fa-solid fa-download"></i>
+        <span>Descargar Balance (.xlsx)</span>
+      </a>
+    </div>
+
+    <!-- Exportar Ventas -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between space-y-4">
+      <div class="space-y-2">
+        <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center text-lg">
+          <i class="fa-solid fa-receipt"></i>
+        </div>
+        <h3 class="text-base font-bold text-white">Planilla de Ventas</h3>
+        <p class="text-xs text-slate-400">Detalle de cada orden, clientes, medios de pago, costos CMV y cálculo automático de ganancia.</p>
+      </div>
+      <a href="/api/export/sales" class="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-blue-300 font-bold text-xs flex items-center justify-center gap-2 border border-slate-700 transition">
+        <i class="fa-solid fa-download"></i>
+        <span>Descargar Ventas (.xlsx)</span>
+      </a>
+    </div>
+
+    <!-- Exportar Gastos -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between space-y-4">
+      <div class="space-y-2">
+        <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-lg">
+          <i class="fa-solid fa-money-bill-transfer"></i>
+        </div>
+        <h3 class="text-base font-bold text-white">Planilla de Gastos</h3>
+        <p class="text-xs text-slate-400">Historial de egresos organizados por categorías operativas (Ads, packaging, fletes, proveedores).</p>
+      </div>
+      <a href="/api/export/expenses" class="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-rose-300 font-bold text-xs flex items-center justify-center gap-2 border border-slate-700 transition">
+        <i class="fa-solid fa-download"></i>
+        <span>Descargar Gastos (.xlsx)</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- IMPORT SECTION: BULK PRODUCTS FROM EXCEL -->
+  <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center text-lg">
+        <i class="fa-solid fa-file-arrow-up"></i>
+      </div>
+      <div>
+        <h2 class="text-base font-bold text-white">Importación Masiva de Catálogo desde Excel</h2>
+        <p class="text-xs text-slate-400">Subí tu archivo .xlsx o .csv con tu lista previa de productos y precios</p>
+      </div>
+    </div>
+
+    <!-- Dropzone / File input -->
+    <form id="importForm" onsubmit="handleImportExcel(event)" class="space-y-4">
+      <div class="border-2 border-dashed border-slate-700 hover:border-purple-500/60 rounded-2xl p-8 text-center bg-slate-950/60 transition cursor-pointer" onclick="document.getElementById('excelFileInput').click()">
+        <input type="file" id="excelFileInput" accept=".xlsx,.csv" class="hidden" onchange="handleFileSelected(event)">
+        <i class="fa-solid fa-cloud-arrow-up text-3xl text-purple-400 mb-2"></i>
+        <div class="text-sm font-bold text-white" id="uploadFileLabel">Hacé clic para seleccionar tu archivo Excel (.xlsx)</div>
+        <p class="text-xs text-slate-500 mt-1">Reconoce columnas como: Producto, Rubro/Categoría, SKU, Costo, Precio, Stock</p>
+      </div>
+
+      <div class="flex justify-end">
+        <button type="submit" id="btnUploadExcel" disabled class="py-2.5 px-5 rounded-xl bg-purple-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-purple-500 text-white font-bold text-xs shadow-md shadow-purple-600/30 transition flex items-center gap-2">
+          <i class="fa-solid fa-upload"></i>
+          <span>Procesar e Importar Productos</span>
+        </button>
+      </div>
+    </form>
+
+    <!-- Import result box -->
+    <div id="importResult" class="hidden p-4 rounded-xl text-xs space-y-1"></div>
+  </div>
+
+  <!-- ADVANTAGES OF BONA APP OVER EXCEL -->
+  <div class="p-5 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-3">
+    <h3 class="text-sm font-bold text-white flex items-center gap-2">
+      <i class="fa-solid fa-circle-check text-emerald-400"></i>
+      <span>Por qué esta app reemplaza definitivamente a Excel para productos.bona</span>
+    </h3>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-slate-400">
+      <div class="p-3 bg-slate-950 rounded-xl border border-slate-800/80">
+        <strong class="text-slate-200 block mb-1">⚡ Agilidad desde el Celular</strong>
+        En Excel en el móvil es lento y difícil tipear. Acá registrás una venta completa con margen en 10 segundos con botones táctiles.
+      </div>
+      <div class="p-3 bg-slate-950 rounded-xl border border-slate-800/80">
+        <strong class="text-slate-200 block mb-1">🛡️ Sin Fórmulas Rotas</strong>
+        El cálculo de ganancia, costos y caja es manejado por el motor de base de datos sin riesgo de sobreescritura accidental.
+      </div>
+      <div class="p-3 bg-slate-950 rounded-xl border border-slate-800/80">
+        <strong class="text-slate-200 block mb-1">🌐 Acceso Remoto Seguro</strong>
+        Exhibida permanentemente mediante túnel Ngrok en tu dominio reservado para consultar desde cualquier lugar.
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function handleFileSelected(e) {
+  const file = e.target.files[0];
+  const label = document.getElementById('uploadFileLabel');
+  const btn = document.getElementById('btnUploadExcel');
+  if (file) {
+    label.textContent = `Archivo seleccionado: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+    btn.disabled = false;
+  } else {
+    label.textContent = 'Hacé clic para seleccionar tu archivo Excel (.xlsx)';
+    btn.disabled = true;
+  }
+}
+
+async function handleImportExcel(e) {
+  e.preventDefault();
+  const fileInput = document.getElementById('excelFileInput');
+  if (!fileInput.files || fileInput.files.length === 0) {
+    showToast('Seleccioná un archivo antes de importar', 'warning');
+    return;
+  }
+
+  const file = fileInput.files[0];
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const btn = document.getElementById('btnUploadExcel');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Importando...';
+
+  const resultBox = document.getElementById('importResult');
+  resultBox.className = "hidden";
+
+  try {
+    const res = await fetch('/api/import/products', {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await res.json();
+    if (res.ok && data.success) {
+      resultBox.className = "p-4 rounded-xl text-xs bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 block";
+      resultBox.innerHTML = `
+        <div class="font-bold text-sm">✅ Importación Exitosa</div>
+        <div>Se procesaron <strong>${data.total}</strong> productos (${data.created} nuevos creados, ${data.updated} actualizados).</div>
+      `;
+      showToast(`¡${data.total} productos importados correctamente!`, 'success');
+      fileInput.value = '';
+      document.getElementById('uploadFileLabel').textContent = 'Hacé clic para seleccionar otro archivo Excel (.xlsx)';
+    } else {
+      resultBox.className = "p-4 rounded-xl text-xs bg-rose-500/10 border border-rose-500/30 text-rose-300 block";
+      resultBox.innerHTML = `
+        <div class="font-bold text-sm">❌ Error al importar</div>
+        <div>${data.error || 'Verificá el formato de las columnas en tu planilla.'}</div>
+      `;
+      showToast('Error al importar archivo', 'error');
+    }
+  } catch (err) {
+    showToast('Error de red al subir archivo', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-upload"></i> <span>Procesar e Importar Productos</span>';
+  }
+}
+</script>
+{% endblock %}

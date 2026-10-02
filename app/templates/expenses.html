@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Flujo Financiero & Gastos | productos.bona{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+
+  <!-- HEADER -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-black text-white tracking-tight flex items-center gap-2">
+        <i class="fa-solid fa-money-bill-transfer text-rose-400"></i>
+        <span>Flujo Financiero & Gastos</span>
+      </h1>
+      <p class="text-xs sm:text-sm text-slate-400">Control de salidas de dinero, conciliación de cajas y costos operativos</p>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <a href="/api/export/expenses" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-700 text-xs font-semibold text-emerald-400 shadow-sm transition">
+        <i class="fa-solid fa-file-excel text-sm"></i>
+        <span>Exportar Excel</span>
+      </a>
+      <button onclick="openModal('quickExpenseModal')" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-md shadow-rose-600/30 transition active:scale-95">
+        <i class="fa-solid fa-minus"></i>
+        <span>Registrar Gasto</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ACCOUNTS LIVE BALANCE ROW -->
+  <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+    <div class="p-4 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-between">
+      <div>
+        <div class="text-[11px] text-slate-400 font-medium">💵 Caja Efectivo</div>
+        <div class="text-lg font-black text-white" id="balCash">$ 0</div>
+      </div>
+    </div>
+    <div class="p-4 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-between">
+      <div>
+        <div class="text-[11px] text-slate-400 font-medium">💳 Mercado Pago</div>
+        <div class="text-lg font-black text-sky-400" id="balMP">$ 0</div>
+      </div>
+    </div>
+    <div class="p-4 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-between">
+      <div>
+        <div class="text-[11px] text-slate-400 font-medium">🏦 Banco / Cta Cte</div>
+        <div class="text-lg font-black text-indigo-400" id="balBank">$ 0</div>
+      </div>
+    </div>
+    <div class="p-4 bg-gradient-to-tr from-emerald-950/50 to-slate-900 border border-emerald-500/30 rounded-2xl flex items-center justify-between">
+      <div>
+        <div class="text-[11px] text-emerald-300 font-bold">💰 TOTAL DISPONIBLE</div>
+        <div class="text-xl font-black text-emerald-400" id="balTotal">$ 0</div>
+      </div>
+      <button onclick="openModal('transferModal')" class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-white flex items-center justify-center transition">
+        <i class="fa-solid fa-arrows-rotate text-xs"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- EXPENSES FILTER & SUMMARY -->
+  <div class="p-4 bg-slate-900 border border-slate-800 rounded-2xl grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+    <div>
+      <label class="block text-slate-400 font-medium mb-1">Buscar por concepto</label>
+      <input type="text" id="filterExpSearch" placeholder="Ej: flete, cajas, publicidad..." oninput="reloadExpenses()" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs focus:outline-none focus:border-rose-500">
+    </div>
+
+    <div>
+      <label class="block text-slate-400 font-medium mb-1">Filtrar por Categoría</label>
+      <select id="filterExpCategory" onchange="reloadExpenses()" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs focus:outline-none focus:border-rose-500">
+        <option value="">Todas las categorías</option>
+        <option value="Mercadería y Proveedores">Mercadería y Proveedores</option>
+        <option value="Publicidad y Ads">Publicidad y Ads</option>
+        <option value="Logística y Envíos">Logística y Envíos</option>
+        <option value="Packaging y Embalaje">Packaging y Embalaje</option>
+        <option value="Servicios e Impuestos">Servicios e Impuestos</option>
+        <option value="Sueldos / Retiros">Sueldos / Retiros</option>
+        <option value="Otros">Otros</option>
+      </select>
+    </div>
+
+    <div class="flex items-center justify-between p-2 bg-slate-950 border border-slate-800 rounded-xl self-end">
+      <span class="text-slate-400">Total en pantalla:</span>
+      <span class="text-base font-black text-rose-400" id="totalExpDisplay">$ 0</span>
+    </div>
+  </div>
+
+  <!-- EXPENSES TABLE -->
+  <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-slate-950/80 text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800 font-bold">
+          <tr>
+            <th class="py-3 px-4">Fecha</th>
+            <th class="py-3 px-4">Categoría</th>
+            <th class="py-3 px-4">Descripción / Concepto</th>
+            <th class="py-3 px-4">Cuenta Origen</th>
+            <th class="py-3 px-4 text-right">Monto</th>
+            <th class="py-3 px-4 text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-800/80" id="expensesTableBody">
+          <!-- Renderizado vía JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let expensesData = [];
+
+async function reloadExpenses() {
+  const search = document.getElementById('filterExpSearch').value.trim();
+  const category = document.getElementById('filterExpCategory').value;
+
+  let url = `/api/expenses?limit=200`;
+  if (search) url += `&search=${encodeURIComponent(search)}`;
+  if (category) url += `&category=${encodeURIComponent(category)}`;
+
+  try {
+    const [eRes, aRes] = await Promise.all([
+      fetch(url),
+      fetch('/api/accounts')
+    ]);
+
+    expensesData = await eRes.json();
+    const accounts = await aRes.json();
+
+    // Actualizar saldos superiores
+    let totalAll = 0;
+    accounts.forEach(a => {
+      totalAll += a.current_balance;
+      const lower = a.name.toLowerCase();
+      if (lower.includes('efectivo')) {
+        document.getElementById('balCash').textContent = formatMoney(a.current_balance);
+      } else if (lower.includes('mercado')) {
+        document.getElementById('balMP').textContent = formatMoney(a.current_balance);
+      } else if (lower.includes('banco') || lower.includes('transferencia')) {
+        document.getElementById('balBank').textContent = formatMoney(a.current_balance);
+      }
+    });
+    document.getElementById('balTotal').textContent = formatMoney(totalAll);
+
+    renderExpensesTable();
+  } catch (err) {
+    console.error("Error cargando gastos:", err);
+  }
+}
+
+function renderExpensesTable() {
+  const tbody = document.getElementById('expensesTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  let totalMonto = 0;
+
+  if (expensesData.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="py-10 text-center text-slate-500">No se registraron gastos con los filtros aplicados.</td></tr>`;
+    document.getElementById('totalExpDisplay').textContent = formatMoney(0);
+    return;
+  }
+
+  expensesData.forEach(e => {
+    totalMonto += e.amount;
+
+    let catColor = "bg-slate-800 text-slate-300";
+    if (e.category.includes('Publicidad')) catColor = "bg-purple-500/20 text-purple-300";
+    else if (e.category.includes('Mercadería')) catColor = "bg-amber-500/20 text-amber-300";
+    else if (e.category.includes('Logística')) catColor = "bg-sky-500/20 text-sky-300";
+    else if (e.category.includes('Packaging')) catColor = "bg-teal-500/20 text-teal-300";
+
+    const tr = document.createElement('tr');
+    tr.className = "hover:bg-slate-800/40 transition";
+    tr.innerHTML = `
+      <td class="py-3 px-4 text-slate-400 whitespace-nowrap">${new Date(e.date).toLocaleDateString('es-AR')} ${new Date(e.date).toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'})}</td>
+      <td class="py-3 px-4">
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${catColor}">${e.category}</span>
+      </td>
+      <td class="py-3 px-4 font-medium text-white">${e.description}</td>
+      <td class="py-3 px-4 text-slate-400 font-medium">Cuenta vinculada</td>
+      <td class="py-3 px-4 text-right font-black text-rose-400">-${formatMoney(e.amount)}</td>
+      <td class="py-3 px-4 text-center">
+        <button onclick="deleteExpenseConfirm(${e.id}, '${e.description}', ${e.amount})" title="Eliminar gasto y restaurar saldo" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition">
+          <i class="fa-solid fa-trash text-xs"></i>
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('totalExpDisplay').textContent = `-${formatMoney(totalMonto)}`;
+}
+
+async function deleteExpenseConfirm(expId, desc, amount) {
+  if (!confirm(`¿Eliminar el gasto "${desc}" por ${formatMoney(amount)}? El saldo se reintegrará a la cuenta de origen.`)) {
+    return;
+  }
+  try {
+    const res = await fetch(`/api/expenses/${expId}`, { method: 'DELETE' });
+    if (res.ok) {
+      showToast('Gasto eliminado y saldo reintegrado 🔄', 'success');
+      loadGlobalAccounts();
+      reloadExpenses();
+    }
+  } catch (err) {
+    showToast('Error al eliminar gasto', 'error');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  reloadExpenses();
+});
+</script>
+{% endblock %}

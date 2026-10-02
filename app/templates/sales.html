@@ -1,0 +1,347 @@
+{% extends "base.html" %}
+
+{% block title %}Historial de Ventas | productos.bona{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-5">
+
+  <!-- HEADER & ACTIONS -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-black text-white tracking-tight flex items-center gap-2">
+        <i class="fa-solid fa-receipt text-blue-400"></i>
+        <span>Historial de Ventas</span>
+      </h1>
+      <p class="text-xs sm:text-sm text-slate-400">Registro detallado de transacciones, canales, clientes y márgenes</p>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <a href="/api/export/sales" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-700 text-xs font-semibold text-emerald-400 shadow-sm transition">
+        <i class="fa-solid fa-file-excel text-sm"></i>
+        <span>Exportar Excel</span>
+      </a>
+      <a href="/pos" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold shadow-md shadow-emerald-500/20 transition">
+        <i class="fa-solid fa-plus"></i>
+        <span>Nueva Venta</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- FILTERS BAR -->
+  <div class="p-4 bg-slate-900 border border-slate-800 rounded-2xl grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+    <div>
+      <label class="block text-slate-400 font-medium mb-1">Buscar</label>
+      <input type="text" id="filterSearch" placeholder="Cliente, orden o notas..." oninput="reloadSales()" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs focus:outline-none focus:border-emerald-500">
+    </div>
+
+    <div>
+      <label class="block text-slate-400 font-medium mb-1">Canal de Venta</label>
+      <select id="filterChannel" onchange="reloadSales()" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs focus:outline-none focus:border-emerald-500">
+        <option value="">Todos los canales</option>
+        <option value="Instagram">Instagram</option>
+        <option value="WhatsApp">WhatsApp</option>
+        <option value="Local / Mostrador">Local / Mostrador</option>
+        <option value="Mercado Libre">Mercado Libre</option>
+        <option value="Web">Web Online</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-slate-400 font-medium mb-1">Estado</label>
+      <select id="filterStatus" onchange="reloadSales()" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs focus:outline-none focus:border-emerald-500">
+        <option value="">Todos los estados</option>
+        <option value="Cobrado">Cobrado</option>
+        <option value="Pendiente">Pendiente de cobro</option>
+        <option value="Anulado">Anuladas</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-slate-400 font-medium mb-1">Medio de Pago</label>
+      <select id="filterPayment" onchange="reloadSales()" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs focus:outline-none focus:border-emerald-500">
+        <option value="">Todos los medios</option>
+        <option value="Mercado Pago">Mercado Pago</option>
+        <option value="Efectivo">Efectivo</option>
+        <option value="Transferencia">Transferencia</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- SUMMARY STATS IN VIEW -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+    <div class="p-3 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between">
+      <span class="text-xs text-slate-400">Total en Pantalla</span>
+      <span class="text-base font-black text-white" id="viewSalesTotal">$ 0</span>
+    </div>
+    <div class="p-3 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between">
+      <span class="text-xs text-slate-400">Ganancia Bruta</span>
+      <span class="text-base font-black text-teal-400" id="viewSalesMargin">$ 0</span>
+    </div>
+    <div class="col-span-2 sm:col-span-1 p-3 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between">
+      <span class="text-xs text-slate-400">Órdenes</span>
+      <span class="text-base font-bold text-slate-200" id="viewSalesCount">0</span>
+    </div>
+  </div>
+
+  <!-- SALES TABLE -->
+  <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-slate-950/80 text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800 font-bold">
+          <tr>
+            <th class="py-3 px-4">Orden</th>
+            <th class="py-3 px-4">Fecha</th>
+            <th class="py-3 px-4">Cliente / Canal</th>
+            <th class="py-3 px-4">Detalle Ítems</th>
+            <th class="py-3 px-4">Medio / Cuenta</th>
+            <th class="py-3 px-4 text-right">Total</th>
+            <th class="py-3 px-4 text-right">Margen</th>
+            <th class="py-3 px-4 text-center">Estado</th>
+            <th class="py-3 px-4 text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-800/80" id="salesTableBody">
+          <!-- Renderizado vía JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL: DETALLE DE TICKET IMPRIMIBLE -->
+<div id="ticketModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+  <div class="bg-white text-slate-900 rounded-2xl w-full max-w-sm p-6 shadow-2xl space-y-4 relative font-mono text-xs">
+    <button onclick="closeModal('ticketModal')" class="absolute top-4 right-4 text-slate-500 hover:text-slate-900">
+      <i class="fa-solid fa-xmark text-lg"></i>
+    </button>
+    <div class="text-center pb-2 border-b border-dashed border-slate-300">
+      <h2 class="text-base font-black tracking-wider uppercase">productos.bona</h2>
+      <p class="text-[10px] text-slate-500">Cuidado Integral & Artículos Seleccionados</p>
+      <div class="text-[11px] font-bold mt-2" id="ticketSaleNum">VTA-0000</div>
+      <div class="text-[10px] text-slate-500" id="ticketDate">--/--/---- --:--</div>
+    </div>
+    
+    <div class="space-y-1 text-[11px]">
+      <div><strong>Cliente:</strong> <span id="ticketCustomer">--</span></div>
+      <div><strong>Canal:</strong> <span id="ticketChannel">--</span> | <strong>Pago:</strong> <span id="ticketPayment">--</span></div>
+    </div>
+
+    <div class="border-t border-b border-dashed border-slate-300 py-2 space-y-1.5" id="ticketItems">
+      <!-- Ítems -->
+    </div>
+
+    <div class="text-right text-sm font-black pt-1">
+      TOTAL: <span id="ticketTotal">$ 0</span>
+    </div>
+
+    <div class="text-center text-[10px] text-slate-400 pt-2 border-t border-dashed border-slate-300">
+      ¡Muchas gracias por su compra!
+    </div>
+
+    <div class="pt-2 flex gap-2 font-sans">
+      <button onclick="window.print()" class="flex-1 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs">Imprimir</button>
+      <button onclick="shareOpenTicketWhatsApp()" class="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1">
+        <i class="fa-brands fa-whatsapp"></i> WhatsApp
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let salesData = [];
+let activeTicketSale = null;
+
+async function reloadSales() {
+  const search = document.getElementById('filterSearch').value.trim();
+  const channel = document.getElementById('filterChannel').value;
+  const status = document.getElementById('filterStatus').value;
+  const payment = document.getElementById('filterPayment').value;
+
+  let url = `/api/sales?limit=200`;
+  if (search) url += `&search=${encodeURIComponent(search)}`;
+  if (channel) url += `&channel=${encodeURIComponent(channel)}`;
+  if (status) url += `&status=${encodeURIComponent(status)}`;
+  if (payment) url += `&payment_method=${encodeURIComponent(payment)}`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return;
+    salesData = await res.json();
+    renderSalesTable();
+  } catch (err) {
+    console.error("Error al cargar ventas:", err);
+  }
+}
+
+function renderSalesTable() {
+  const tbody = document.getElementById('salesTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  let totalSales = 0;
+  let totalMargin = 0;
+
+  if (salesData.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" class="py-10 text-center text-slate-500">No se encontraron ventas con los filtros aplicados.</td></tr>`;
+    document.getElementById('viewSalesTotal').textContent = formatMoney(0);
+    document.getElementById('viewSalesMargin').textContent = formatMoney(0);
+    document.getElementById('viewSalesCount').textContent = "0";
+    return;
+  }
+
+  salesData.forEach(s => {
+    if (s.status !== 'Anulado') {
+      totalSales += s.total_amount;
+      totalMargin += s.gross_margin;
+    }
+
+    const itemsSummary = s.items.map(it => `${it.quantity}x ${it.product_name}`).join(', ');
+    const isAnulado = s.status === 'Anulado';
+    const isPendiente = s.status === 'Pendiente';
+
+    let statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300">Cobrado</span>`;
+    if (isPendiente) {
+      statusBadge = `<button onclick="markAsCobrado(${s.id})" title="Click para cobrar" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 transition cursor-pointer">⏳ Pendiente (Cobrar)</button>`;
+    } else if (isAnulado) {
+      statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300">Anulada</span>`;
+    }
+
+    let channelColor = "text-sky-400";
+    if (s.channel === 'Instagram') channelColor = "text-pink-400";
+    else if (s.channel === 'WhatsApp') channelColor = "text-emerald-400";
+    else if (s.channel === 'Mercado Libre') channelColor = "text-yellow-400";
+
+    const tr = document.createElement('tr');
+    tr.className = `hover:bg-slate-800/40 transition ${isAnulado ? 'opacity-50' : ''}`;
+    tr.innerHTML = `
+      <td class="py-3 px-4 font-mono font-bold text-white">${s.sale_number}</td>
+      <td class="py-3 px-4 text-slate-400 whitespace-nowrap">${new Date(s.date).toLocaleDateString('es-AR')} ${new Date(s.date).toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'})}</td>
+      <td class="py-3 px-4">
+        <div class="font-bold text-slate-200">${s.customer_name}</div>
+        <div class="text-[10px] ${channelColor} font-semibold">${s.channel}</div>
+      </td>
+      <td class="py-3 px-4 text-slate-300 max-w-xs truncate" title="${itemsSummary}">${itemsSummary}</td>
+      <td class="py-3 px-4 text-slate-400">
+        <div>${s.payment_method}</div>
+      </td>
+      <td class="py-3 px-4 text-right font-black text-white">${formatMoney(s.total_amount)}</td>
+      <td class="py-3 px-4 text-right">
+        <div class="font-bold text-teal-400">+${formatMoney(s.gross_margin)}</div>
+        <div class="text-[9px] text-slate-500">(${s.margin_percentage}%)</div>
+      </td>
+      <td class="py-3 px-4 text-center whitespace-nowrap">${statusBadge}</td>
+      <td class="py-3 px-4 text-center whitespace-nowrap">
+        <div class="inline-flex items-center gap-1.5">
+          <button onclick="viewTicket(${s.id})" title="Ver comprobante" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition">
+            <i class="fa-solid fa-receipt text-xs"></i>
+          </button>
+          ${!isAnulado ? `
+            <button onclick="annulSaleConfirm(${s.id}, '${s.sale_number}')" title="Anular venta y restaurar stock" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 flex items-center justify-center transition">
+              <i class="fa-solid fa-ban text-xs"></i>
+            </button>
+          ` : ''}
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('viewSalesTotal').textContent = formatMoney(totalSales);
+  document.getElementById('viewSalesMargin').textContent = `+${formatMoney(totalMargin)}`;
+  document.getElementById('viewSalesCount').textContent = salesData.length;
+}
+
+async function markAsCobrado(saleId) {
+  try {
+    const res = await fetch(`/api/sales/${saleId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'Cobrado' })
+    });
+    if (res.ok) {
+      showToast('Venta marcada como Cobrada e ingresada a caja ✅', 'success');
+      loadGlobalAccounts();
+      reloadSales();
+    }
+  } catch (err) {
+    showToast('Error al actualizar venta', 'error');
+  }
+}
+
+async function annulSaleConfirm(saleId, num) {
+  if (!confirm(`¿Estás seguro de anular la venta ${num}? El stock de los productos será restaurado y el monto se debitará de la caja.`)) {
+    return;
+  }
+  try {
+    const res = await fetch(`/api/sales/${saleId}/annul`, { method: 'POST' });
+    if (res.ok) {
+      showToast(`Venta ${num} anulada y stock devuelto 🔄`, 'warning');
+      loadGlobalAccounts();
+      reloadSales();
+    }
+  } catch (err) {
+    showToast('Error al anular venta', 'error');
+  }
+}
+
+function viewTicket(saleId) {
+  const s = salesData.find(x => x.id === saleId);
+  if (!s) return;
+  activeTicketSale = s;
+
+  document.getElementById('ticketSaleNum').textContent = s.sale_number;
+  document.getElementById('ticketDate').textContent = `${new Date(s.date).toLocaleDateString('es-AR')} ${new Date(s.date).toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'})}`;
+  document.getElementById('ticketCustomer').textContent = s.customer_name;
+  document.getElementById('ticketChannel').textContent = s.channel;
+  document.getElementById('ticketPayment').textContent = s.payment_method;
+  document.getElementById('ticketTotal').textContent = formatMoney(s.total_amount);
+
+  const container = document.getElementById('ticketItems');
+  container.innerHTML = '';
+  s.items.forEach(it => {
+    const div = document.createElement('div');
+    div.className = "flex justify-between";
+    div.innerHTML = `
+      <span>${it.quantity}x ${it.product_name}</span>
+      <span class="font-bold">${formatMoney(it.subtotal)}</span>
+    `;
+    container.appendChild(div);
+  });
+
+  openModal('ticketModal');
+}
+
+function shareOpenTicketWhatsApp() {
+  if (!activeTicketSale) return;
+  const s = activeTicketSale;
+  let msg = `*COMPROBANTE DE COMPRA — productos.bona*\n`;
+  msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
+  msg += `*Orden:* ${s.sale_number}\n`;
+  msg += `*Fecha:* ${new Date(s.date).toLocaleDateString('es-AR')}\n`;
+  msg += `*Cliente:* ${s.customer_name}\n`;
+  msg += `*Canal:* ${s.channel} | *Pago:* ${s.payment_method}\n`;
+  msg += `━━━━━━━━━━━━━━━━━━━━━\n*PRODUCTOS:*\n`;
+  s.items.forEach(it => {
+    msg += `• ${it.quantity}x ${it.product_name} - ${formatMoney(it.subtotal)}\n`;
+  });
+  msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
+  msg += `*TOTAL ABONADO:* ${formatMoney(s.total_amount)}\n\n`;
+  msg += `_¡Muchas gracias por su compra!_ 🌿`;
+
+  const encoded = encodeURIComponent(msg);
+  let url = `https://wa.me/?text=${encoded}`;
+  if (s.customer_phone) {
+    const clean = s.customer_phone.replace(/\D/g, '');
+    url = `https://wa.me/${clean}?text=${encoded}`;
+  }
+  window.open(url, '_blank');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  reloadSales();
+});
+</script>
+{% endblock %}

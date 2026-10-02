@@ -1,0 +1,592 @@
+{% extends "base.html" %}
+
+{% block title %}Punto de Venta Ágil (10s) | productos.bona{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto h-[calc(100vh-8.5rem)] flex flex-col">
+
+  <!-- TOP BAR: POS CONTROLS -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+    <div>
+      <h1 class="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+        <i class="fa-solid fa-bolt text-yellow-400"></i>
+        <span>Punto de Venta Ágil</span>
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">Modo Rápido 10s</span>
+      </h1>
+      <p class="text-xs text-slate-400">Seleccioná los productos y confirmá la venta en 1 clic</p>
+    </div>
+
+    <!-- Quick search input -->
+    <div class="relative w-full sm:w-72">
+      <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+      <input type="text" id="posSearch" placeholder="Buscar por nombre o SKU..." oninput="filterProducts()" class="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+    </div>
+  </div>
+
+  <!-- MAIN SPLIT: PRODUCTS CATALOG (LEFT) + LIVE CART/ORDER (RIGHT) -->
+  <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-5 pt-3 overflow-hidden">
+    
+    <!-- LEFT: PRODUCT GRID (7 cols on LG) -->
+    <div class="lg:col-span-7 flex flex-col overflow-hidden">
+      <!-- Category Filter Pills -->
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none text-xs font-semibold" id="categoryPills">
+        <button onclick="filterCategory(null)" class="cat-pill px-3 py-1.5 rounded-xl bg-emerald-500 text-white whitespace-nowrap" id="cat-pill-all">Todos</button>
+        <!-- Cargado vía JS -->
+      </div>
+
+      <!-- Products Grid -->
+      <div class="flex-1 overflow-y-auto pr-1 grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3 content-start" id="posProductsGrid">
+        <!-- Renderizado dinámico -->
+      </div>
+    </div>
+
+    <!-- RIGHT: LIVE ORDER & QUICK CHECKOUT (5 cols on LG) -->
+    <div class="lg:col-span-5 flex flex-col bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+      
+      <!-- Cart Header -->
+      <div class="p-3.5 border-b border-slate-800/80 flex items-center justify-between bg-slate-950/40">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-basket-shopping text-emerald-400"></i>
+          <span class="font-bold text-sm text-white">Orden Actual</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-semibold" id="cartItemCount">0 ítems</span>
+        </div>
+        <button onclick="clearCart()" class="text-xs text-rose-400 hover:text-rose-300 font-medium flex items-center gap-1">
+          <i class="fa-solid fa-trash-can text-[10px]"></i> Vaciar
+        </button>
+      </div>
+
+      <!-- Cart Items List (Scrollable) -->
+      <div class="flex-1 overflow-y-auto p-3 space-y-2" id="cartItemsList">
+        <div class="h-full flex flex-col items-center justify-center text-slate-500 text-xs py-8">
+          <i class="fa-solid fa-cart-arrow-down text-3xl mb-2 text-slate-600"></i>
+          <p>Tocá un producto del catálogo para sumarlo a la venta</p>
+        </div>
+      </div>
+
+      <!-- Checkout Options & Instant Summary -->
+      <div class="p-3.5 bg-slate-950 border-t border-slate-800 space-y-3">
+        
+        <!-- Cliente & Teléfono -->
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <label class="block text-slate-400 text-[11px] mb-1 font-medium">Cliente</label>
+            <input type="text" id="orderCustomer" value="Consumidor Final" class="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-white text-xs focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="block text-slate-400 text-[11px] mb-1 font-medium">WhatsApp / Teléfono (opcional)</label>
+            <input type="text" id="orderPhone" placeholder="Ej: 1123456789" class="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-white text-xs focus:outline-none focus:border-emerald-500">
+          </div>
+        </div>
+
+        <!-- Canal de Venta Pills -->
+        <div>
+          <label class="block text-slate-400 text-[11px] mb-1 font-medium">Canal de Venta</label>
+          <div class="grid grid-cols-4 gap-1 text-[11px] font-semibold text-center" id="channelPills">
+            <button type="button" onclick="selectChannel('Instagram')" class="channel-pill py-1.5 rounded-lg border border-emerald-500 bg-emerald-500/10 text-emerald-300">Instagram</button>
+            <button type="button" onclick="selectChannel('WhatsApp')" class="channel-pill py-1.5 rounded-lg border border-slate-700 bg-slate-900 text-slate-400">WhatsApp</button>
+            <button type="button" onclick="selectChannel('Local')" class="channel-pill py-1.5 rounded-lg border border-slate-700 bg-slate-900 text-slate-400">Local</button>
+            <button type="button" onclick="selectChannel('Mercado Libre')" class="channel-pill py-1.5 rounded-lg border border-slate-700 bg-slate-900 text-slate-400">MeLi</button>
+          </div>
+        </div>
+
+        <!-- Medio de Pago & Cuenta Destino -->
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <label class="block text-slate-400 text-[11px] mb-1 font-medium">Medio de Pago</label>
+            <select id="orderPaymentMethod" onchange="updateAccountSuggestion()" class="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-white text-xs focus:outline-none focus:border-emerald-500">
+              <option value="Mercado Pago">Mercado Pago</option>
+              <option value="Efectivo">Efectivo</option>
+              <option value="Transferencia">Transferencia Bancaria</option>
+              <option value="Tarjeta Débito">Tarjeta Débito</option>
+              <option value="Tarjeta Crédito">Tarjeta Crédito</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 text-[11px] mb-1 font-medium">Cuenta Destino</label>
+            <select id="orderAccount" class="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-white text-xs focus:outline-none focus:border-emerald-500">
+              <!-- Cargado dinámicamente -->
+            </select>
+          </div>
+        </div>
+
+        <!-- LIVE PROFIT METRICS BOX (LUMELÍ SIGNATURE) -->
+        <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+          <div>
+            <div class="text-[10px] uppercase font-bold text-slate-400">Ganancia Bruta Estimada</div>
+            <div class="text-sm font-extrabold text-teal-400 flex items-center gap-1.5">
+              <span id="orderGrossMargin">+$ 0</span>
+              <span id="orderMarginPct" class="text-[11px] font-semibold text-teal-300/80 bg-teal-500/10 px-1.5 py-0.5 rounded">(0%)</span>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="text-[10px] uppercase font-bold text-slate-400">Total a Cobrar</div>
+            <div class="text-2xl font-black text-white tracking-tight" id="orderTotal">$ 0</div>
+          </div>
+        </div>
+
+        <!-- BIG CTA: CONFIRMAR VENTA -->
+        <button onclick="submitOrder()" id="btnSubmitOrder" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-sm tracking-wide shadow-lg shadow-emerald-500/25 transition active:scale-[0.98] flex items-center justify-center gap-2">
+          <i class="fa-solid fa-circle-check text-base"></i>
+          <span>Confirmar Venta Ágil (Enter)</span>
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ============================================== -->
+<!-- MODAL: ÉXITO DE VENTA & TICKET DIGITAL LUMELÍ -->
+<!-- ============================================== -->
+<div id="saleSuccessModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
+  <div class="bg-slate-900 border border-emerald-500/40 rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center space-y-4 relative">
+    <div class="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-3xl mx-auto shadow-inner">
+      <i class="fa-solid fa-check"></i>
+    </div>
+
+    <div>
+      <span class="text-xs font-bold text-emerald-400 uppercase tracking-widest" id="successSaleNumber">VTA-0000</span>
+      <h2 class="text-2xl font-black text-white mt-0.5">¡Venta Registrada!</h2>
+      <p class="text-xs text-slate-400 mt-1">Impactada en caja y stock descontado en tiempo real.</p>
+    </div>
+
+    <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 text-left text-xs space-y-1">
+      <div class="flex justify-between text-slate-400">
+        <span>Cliente:</span>
+        <span class="font-semibold text-white" id="successCustomer">Consumidor Final</span>
+      </div>
+      <div class="flex justify-between text-slate-400">
+        <span>Total:</span>
+        <span class="font-black text-emerald-400 text-sm" id="successTotal">$ 0</span>
+      </div>
+      <div class="flex justify-between text-slate-400">
+        <span>Ganancia:</span>
+        <span class="font-bold text-teal-400" id="successMargin">+$ 0</span>
+      </div>
+    </div>
+
+    <!-- Actions: WhatsApp Share & Continue -->
+    <div class="space-y-2 pt-1">
+      <button onclick="shareTicketWhatsApp()" class="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-emerald-600/30 transition">
+        <i class="fa-brands fa-whatsapp text-base"></i>
+        <span>Enviar Comprobante por WhatsApp</span>
+      </button>
+
+      <button onclick="closeSuccessAndReset()" class="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition">
+        <span>Siguiente Venta (Espacio)</span>
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let allProducts = [];
+let allCategories = [];
+let accountsList = [];
+let activeCategory = null;
+let currentChannel = 'Instagram';
+
+// Cart state: map of { product_id: { product, quantity, unit_price, unit_cost } }
+let cart = {};
+let lastCreatedSale = null;
+
+// Cargar catálogo de productos y cuentas
+async function loadPOSData() {
+  try {
+    const [pRes, cRes, aRes] = await Promise.all([
+      fetch('/api/products?active_only=true'),
+      fetch('/api/categories'),
+      fetch('/api/accounts')
+    ]);
+
+    allProducts = await pRes.json();
+    allCategories = await cRes.json();
+    accountsList = await aRes.json();
+
+    renderCategoryPills();
+    renderProducts(allProducts);
+    populateAccountsSelect();
+  } catch (err) {
+    console.error("Error inicializando POS:", err);
+  }
+}
+
+function renderCategoryPills() {
+  const container = document.getElementById('categoryPills');
+  if (!container) return;
+
+  // Preservar 'Todos'
+  container.innerHTML = `
+    <button onclick="filterCategory(null)" class="cat-pill px-3 py-1.5 rounded-xl bg-emerald-500 text-white whitespace-nowrap" id="cat-pill-all">Todos</button>
+  `;
+
+  allCategories.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = "cat-pill px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white whitespace-nowrap transition";
+    btn.id = `cat-pill-${cat.id}`;
+    btn.innerHTML = `<i class="fa-solid ${cat.icon || 'fa-box'} mr-1 text-[10px] text-emerald-400"></i> ${cat.name}`;
+    btn.onclick = () => filterCategory(cat.id);
+    container.appendChild(btn);
+  });
+}
+
+function filterCategory(catId) {
+  activeCategory = catId;
+  document.querySelectorAll('.cat-pill').forEach(btn => {
+    btn.className = "cat-pill px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white whitespace-nowrap transition";
+  });
+
+  const activeBtn = catId ? document.getElementById(`cat-pill-${catId}`) : document.getElementById('cat-pill-all');
+  if (activeBtn) {
+    activeBtn.className = "cat-pill px-3 py-1.5 rounded-xl bg-emerald-500 text-white whitespace-nowrap shadow-sm";
+  }
+
+  filterProducts();
+}
+
+function filterProducts() {
+  const query = document.getElementById('posSearch').value.toLowerCase().trim();
+  let filtered = allProducts;
+
+  if (activeCategory) {
+    filtered = filtered.filter(p => p.category_id === activeCategory);
+  }
+  if (query) {
+    filtered = filtered.filter(p => 
+      p.name.toLowerCase().includes(query) || 
+      (p.sku && p.sku.toLowerCase().includes(query))
+    );
+  }
+
+  renderProducts(filtered);
+}
+
+function renderProducts(products) {
+  const grid = document.getElementById('posProductsGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  if (products.length === 0) {
+    grid.innerHTML = '<div class="col-span-full py-12 text-center text-slate-500 text-xs">No se encontraron productos en el catálogo.</div>';
+    return;
+  }
+
+  products.forEach(p => {
+    const isLowStock = p.stock_quantity <= p.min_stock_alert;
+    const isOutOfStock = p.stock_quantity <= 0;
+    
+    let stockBadgeClass = "bg-slate-800 text-slate-300";
+    if (isOutOfStock) stockBadgeClass = "bg-rose-500/20 text-rose-300 font-bold border border-rose-500/30";
+    else if (isLowStock) stockBadgeClass = "bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30";
+
+    const card = document.createElement('div');
+    card.className = "bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-emerald-500/50 rounded-xl p-3 flex flex-col justify-between cursor-pointer transition active:scale-[0.98] select-none shadow-sm relative group";
+    card.onclick = () => addToCart(p);
+
+    card.innerHTML = `
+      <div>
+        <div class="flex items-center justify-between text-[10px] text-slate-400 mb-1">
+          <span class="font-mono text-slate-500">${p.sku || 'SKU'}</span>
+          <span class="px-1.5 py-0.5 rounded text-[10px] ${stockBadgeClass}">Stock: ${p.stock_quantity}</span>
+        </div>
+        <div class="font-bold text-white text-xs sm:text-sm line-clamp-2 mb-2">${p.name}</div>
+      </div>
+      <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between">
+        <div>
+          <div class="text-sm font-extrabold text-white">${formatMoney(p.sale_price)}</div>
+          <div class="text-[10px] text-emerald-400 font-semibold">+${formatMoney(p.estimated_unit_margin)} (${p.estimated_margin_pct}%)</div>
+        </div>
+        <div class="w-7 h-7 rounded-lg bg-emerald-500/15 group-hover:bg-emerald-500 group-hover:text-white text-emerald-400 flex items-center justify-center transition">
+          <i class="fa-solid fa-plus text-xs"></i>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function addToCart(prod) {
+  if (cart[prod.id]) {
+    cart[prod.id].quantity += 1;
+  } else {
+    cart[prod.id] = {
+      product: prod,
+      quantity: 1,
+      unit_price: prod.sale_price,
+      unit_cost: prod.cost_price
+    };
+  }
+  renderCart();
+}
+
+function updateCartQty(prodId, diff) {
+  if (!cart[prodId]) return;
+  cart[prodId].quantity += diff;
+  if (cart[prodId].quantity <= 0) {
+    delete cart[prodId];
+  }
+  renderCart();
+}
+
+function updateCartPrice(prodId, newPrice) {
+  if (!cart[prodId]) return;
+  const p = parseFloat(newPrice);
+  cart[prodId].unit_price = isNaN(p) ? 0 : p;
+  renderCartSummary();
+}
+
+function removeFromCart(prodId) {
+  delete cart[prodId];
+  renderCart();
+}
+
+function clearCart() {
+  cart = {};
+  renderCart();
+}
+
+function renderCart() {
+  const container = document.getElementById('cartItemsList');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const itemKeys = Object.keys(cart);
+  document.getElementById('cartItemCount').textContent = `${itemKeys.length} ítems`;
+
+  if (itemKeys.length === 0) {
+    container.innerHTML = `
+      <div class="h-full flex flex-col items-center justify-center text-slate-500 text-xs py-8">
+        <i class="fa-solid fa-cart-arrow-down text-3xl mb-2 text-slate-600"></i>
+        <p>Tocá un producto del catálogo para sumarlo a la venta</p>
+      </div>
+    `;
+    renderCartSummary();
+    return;
+  }
+
+  itemKeys.forEach(k => {
+    const it = cart[k];
+    const subtotal = it.quantity * it.unit_price;
+    const cost = it.quantity * it.unit_cost;
+    const margin = subtotal - cost;
+
+    const row = document.createElement('div');
+    row.className = "p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs flex flex-col gap-1.5";
+    row.innerHTML = `
+      <div class="flex items-center justify-between">
+        <span class="font-bold text-slate-100 truncate pr-2">${it.product.name}</span>
+        <button onclick="removeFromCart(${it.product.id})" class="text-slate-500 hover:text-rose-400">
+          <i class="fa-solid fa-xmark text-xs"></i>
+        </button>
+      </div>
+      <div class="flex items-center justify-between gap-2">
+        <!-- Qty steppers -->
+        <div class="flex items-center gap-1.5 bg-slate-900 border border-slate-700 rounded-lg p-0.5">
+          <button onclick="updateCartQty(${it.product.id}, -1)" class="w-6 h-6 rounded flex items-center justify-center text-slate-300 hover:bg-slate-800">
+            <i class="fa-solid fa-minus text-[10px]"></i>
+          </button>
+          <span class="w-6 text-center font-bold text-white text-xs">${it.quantity}</span>
+          <button onclick="updateCartQty(${it.product.id}, 1)" class="w-6 h-6 rounded flex items-center justify-center text-slate-300 hover:bg-slate-800">
+            <i class="fa-solid fa-plus text-[10px]"></i>
+          </button>
+        </div>
+
+        <!-- Editable unit price -->
+        <div class="flex items-center gap-1 text-[11px] text-slate-400">
+          <span>c/u $</span>
+          <input type="number" step="100" value="${it.unit_price}" onchange="updateCartPrice(${it.product.id}, this.value)" class="w-20 px-1.5 py-0.5 bg-slate-900 border border-slate-700 rounded text-right text-white font-bold text-xs focus:outline-none focus:border-emerald-500">
+        </div>
+
+        <!-- Subtotal -->
+        <div class="text-right">
+          <div class="font-black text-white text-xs">${formatMoney(subtotal)}</div>
+          <div class="text-[9px] text-emerald-400 font-semibold">+${formatMoney(margin)}</div>
+        </div>
+      </div>
+    `;
+    container.appendChild(row);
+  });
+
+  renderCartSummary();
+}
+
+function renderCartSummary() {
+  let total = 0;
+  let totalCost = 0;
+
+  Object.values(cart).forEach(it => {
+    total += it.quantity * it.unit_price;
+    totalCost += it.quantity * it.unit_cost;
+  });
+
+  const grossMargin = total - totalCost;
+  const pct = total > 0 ? ((grossMargin / total) * 100).toFixed(1) : 0;
+
+  document.getElementById('orderTotal').textContent = formatMoney(total);
+  document.getElementById('orderGrossMargin').textContent = `+${formatMoney(grossMargin)}`;
+  document.getElementById('orderMarginPct').textContent = `(${pct}%)`;
+}
+
+function selectChannel(ch) {
+  currentChannel = ch;
+  document.querySelectorAll('.channel-pill').forEach(btn => {
+    btn.className = "channel-pill py-1.5 rounded-lg border border-slate-700 bg-slate-900 text-slate-400";
+  });
+  event.target.className = "channel-pill py-1.5 rounded-lg border border-emerald-500 bg-emerald-500/10 text-emerald-300 font-bold";
+}
+
+function populateAccountsSelect() {
+  const sel = document.getElementById('orderAccount');
+  if (!sel) return;
+  sel.innerHTML = '';
+
+  accountsList.forEach(a => {
+    const opt = document.createElement('option');
+    opt.value = a.id;
+    opt.textContent = a.name;
+    sel.appendChild(opt);
+  });
+  updateAccountSuggestion();
+}
+
+function updateAccountSuggestion() {
+  const pm = document.getElementById('orderPaymentMethod').value.toLowerCase();
+  const sel = document.getElementById('orderAccount');
+  if (!sel) return;
+
+  for (let opt of sel.options) {
+    const text = opt.textContent.toLowerCase();
+    if (pm.includes('efectivo') && text.includes('efectivo')) {
+      opt.selected = true; break;
+    } else if (pm.includes('mercado') && text.includes('mercado')) {
+      opt.selected = true; break;
+    } else if ((pm.includes('transferencia') || pm.includes('débito') || pm.includes('crédito')) && text.includes('banco')) {
+      opt.selected = true; break;
+    }
+  }
+}
+
+async function submitOrder() {
+  const itemKeys = Object.keys(cart);
+  if (itemKeys.length === 0) {
+    showToast('Agregá al menos un producto a la orden', 'warning');
+    return;
+  }
+
+  const customer = document.getElementById('orderCustomer').value.trim() || 'Consumidor Final';
+  const phone = document.getElementById('orderPhone').value.trim();
+  const payment_method = document.getElementById('orderPaymentMethod').value;
+  const account_id = parseInt(document.getElementById('orderAccount').value);
+
+  const payload = {
+    customer_name: customer,
+    customer_phone: phone,
+    channel: currentChannel,
+    payment_method: payment_method,
+    account_id: account_id,
+    status: 'Cobrado',
+    items: itemKeys.map(k => ({
+      product_id: cart[k].product.id,
+      product_name: cart[k].product.name,
+      quantity: cart[k].quantity,
+      unit_cost: cart[k].unit_cost,
+      unit_price: cart[k].unit_price
+    }))
+  };
+
+  const btn = document.getElementById('btnSubmitOrder');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Registrando...';
+
+  try {
+    const res = await fetch('/api/sales', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+      const sale = await res.json();
+      lastCreatedSale = sale;
+      showToast(`¡Venta ${sale.sale_number} confirmada! 🎉`, 'success');
+      loadGlobalAccounts();
+      
+      // Mostrar modal de éxito ágil
+      document.getElementById('successSaleNumber').textContent = sale.sale_number;
+      document.getElementById('successCustomer').textContent = sale.customer_name;
+      document.getElementById('successTotal').textContent = formatMoney(sale.total_amount);
+      document.getElementById('successMargin').textContent = `+${formatMoney(sale.gross_margin)} (${sale.margin_percentage}%)`;
+      openModal('saleSuccessModal');
+
+      // Actualizar stock local de los productos vendidos
+      payload.items.forEach(it => {
+        const p = allProducts.find(x => x.id === it.product_id);
+        if (p) p.stock_quantity -= it.quantity;
+      });
+      filterProducts();
+
+      clearCart();
+    } else {
+      const err = await res.json();
+      showToast(err.detail || 'Error al procesar la venta', 'error');
+    }
+  } catch (err) {
+    showToast('Error de red al guardar venta', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-circle-check text-base"></i> <span>Confirmar Venta Ágil (Enter)</span>';
+  }
+}
+
+function shareTicketWhatsApp() {
+  if (!lastCreatedSale) return;
+  const s = lastCreatedSale;
+  
+  let msg = `*COMPROBANTE DE COMPRA — productos.bona*\n`;
+  msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
+  msg += `*Orden:* ${s.sale_number}\n`;
+  msg += `*Fecha:* ${new Date(s.date).toLocaleDateString('es-AR')}\n`;
+  msg += `*Cliente:* ${s.customer_name}\n`;
+  msg += `*Canal:* ${s.channel} | *Pago:* ${s.payment_method}\n`;
+  msg += `━━━━━━━━━━━━━━━━━━━━━\n*PRODUCTOS:*\n`;
+
+  s.items.forEach(it => {
+    msg += `• ${it.quantity}x ${it.product_name} - ${formatMoney(it.subtotal)}\n`;
+  });
+
+  msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
+  msg += `*TOTAL ABONADO:* ${formatMoney(s.total_amount)}\n\n`;
+  msg += `_¡Muchas gracias por confiar en productos.bona!_ 🌿`;
+
+  const encoded = encodeURIComponent(msg);
+  let url = `https://wa.me/?text=${encoded}`;
+  if (s.customer_phone) {
+    const cleanPhone = s.customer_phone.replace(/\D/g, '');
+    url = `https://wa.me/${cleanPhone}?text=${encoded}`;
+  }
+  window.open(url, '_blank');
+}
+
+function closeSuccessAndReset() {
+  closeModal('saleSuccessModal');
+  document.getElementById('orderCustomer').value = 'Consumidor Final';
+  document.getElementById('orderPhone').value = '';
+}
+
+// Atajos de teclado (Enter para confirmar, Espacio para cerrar modal)
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.ctrlKey) {
+    submitOrder();
+  }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadPOSData();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Konta | Iniciar Sesión & Registro</title>
+
+  <!-- Favicon con Isotipo K -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2225%22 fill=%22%23f97316%22/><path d=%22M30 24 v52 M30 50 l38 -26 M44 42 l26 34%22 stroke=%22white%22 stroke-width=%2212%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 fill=%22none%22/></svg>">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            orange: {
+              500: '#f97316',
+              600: '#ea580c',
+              700: '#c2410c'
+            },
+            emerald: {
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- FontAwesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .touch-btn {
+      touch-action: manipulation;
+    }
+  </style>
+</head>
+<body class="min-h-full flex flex-col justify-center items-center p-4 sm:p-6 bg-slate-950 text-slate-100 antialiased selection:bg-orange-500 selection:text-white">
+
+  <!-- BACKGROUND GLOW EFFECTS -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+    <div class="absolute -top-40 -left-40 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl"></div>
+    <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl"></div>
+  </div>
+
+  <main class="w-full max-w-md relative z-10 my-auto">
+    <!-- BRANDING HEADER CON ISOTIPO GEOMÉTRICO K -->
+    <div class="text-center mb-6">
+      <div class="inline-flex items-center justify-center mb-3 group">
+        <!-- Isotipo K Geométrico SVG -->
+        <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-orange-500 via-amber-500 to-emerald-400 p-[2px] shadow-xl shadow-orange-500/20 transform group-hover:scale-105 transition duration-300">
+          <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
+            <svg class="w-8 h-8" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- Barra vertical -->
+              <rect x="22" y="18" width="14" height="64" rx="7" fill="url(#k-grad-v)"/>
+              <!-- Diagonal superior -->
+              <path d="M42 50 L68 24 C72 20 78 26 74 30 L53 51 Z" fill="url(#k-grad-d1)"/>
+              <!-- Diagonal inferior -->
+              <path d="M44 46 L73 75 C77 79 71 85 67 81 L38 52 Z" fill="url(#k-grad-d2)"/>
+              <defs>
+                <linearGradient id="k-grad-v" x1="22" y1="18" x2="36" y2="82" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#f97316"/>
+                  <stop offset="1" stop-color="#10b981"/>
+                </linearGradient>
+                <linearGradient id="k-grad-d1" x1="42" y1="20" x2="74" y2="52" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#fb923c"/>
+                  <stop offset="1" stop-color="#f59e0b"/>
+                </linearGradient>
+                <linearGradient id="k-grad-d2" x1="38" y1="46" x2="77" y2="85" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#34d399"/>
+                  <stop offset="1" stop-color="#059669"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <h1 class="text-3xl font-black tracking-tight text-white flex items-center justify-center gap-1">
+        Konta<span class="text-orange-500">.</span>
+      </h1>
+      <p class="text-xs text-slate-400 font-medium mt-1">Gestión Ágil de Ventas & Flujo Financiero</p>
+    </div>
+
+    <!-- TARJETA CONTENEDORA INTERACTIVA -->
+    <div class="bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-3xl p-5 sm:p-7 shadow-2xl shadow-black/80 space-y-5">
+      
+      <!-- PESTAÑAS INTERCAMBIABLES (SIN RECARGA) -->
+      <div class="grid grid-cols-2 p-1.5 bg-slate-950/80 border border-slate-800/80 rounded-2xl text-xs font-bold">
+        <button type="button" id="tabBtnLogin" onclick="switchAuthTab('login')" class="py-2.5 rounded-xl bg-orange-500 text-white shadow-md transition-all duration-200 touch-btn flex items-center justify-center gap-2">
+          <i class="fa-solid fa-right-to-bracket text-xs"></i>
+          <span>Iniciar Sesión</span>
+        </button>
+        <button type="button" id="tabBtnRegister" onclick="switchAuthTab('register')" class="py-2.5 rounded-xl text-slate-400 hover:text-white transition-all duration-200 touch-btn flex items-center justify-center gap-2">
+          <i class="fa-solid fa-user-plus text-xs"></i>
+          <span>Crear Cuenta</span>
+        </button>
+      </div>
+
+      <!-- ALERTA VISUAL DE ERRORES / ÉXITO -->
+      <div id="authAlert" class="hidden p-3.5 rounded-xl border text-xs font-semibold items-start gap-2.5 transition-all duration-300">
+        <i id="authAlertIcon" class="fa-solid fa-circle-exclamation text-base shrink-0 mt-0.5"></i>
+        <div id="authAlertMessage" class="flex-1 leading-snug"></div>
+      </div>
+
+      <!-- ========================================================== -->
+      <!-- FORMULARIO 1: INICIAR SESIÓN -->
+      <!-- ========================================================== -->
+      <form id="formLogin" onsubmit="handleLoginSubmit(event)" class="space-y-4">
+        <div>
+          <label for="loginEmail" class="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1.5">
+            <i class="fa-regular fa-envelope text-slate-400"></i>
+            <span>Correo Electrónico</span>
+          </label>
+          <div class="relative">
+            <input 
+              type="email" 
+              id="loginEmail" 
+              name="email" 
+              required 
+              autocomplete="email"
+              placeholder="tu@negocio.com"
+              class="w-full px-4 py-3 bg-slate-950 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:border-orange-500 transition font-medium placeholder-slate-600 min-h-[48px]"
+            >
+          </div>
+        </div>
+
+        <div>
+          <label for="loginPassword" class="block text-xs font-bold text-slate-300 mb-1.5 flex items-center justify-between">
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid fa-lock text-slate-400"></i>
+              <span>Contraseña</span>
+            </span>
+          </label>
+          <div class="relative">
+            <input 
+              type="password" 
+              id="loginPassword" 
+              name="password" 
+              required 
+              autocomplete="current-password"
+              placeholder="••••••••"
+              class="w-full pl-4 pr-11 py-3 bg-slate-950 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:border-orange-500 transition font-medium placeholder-slate-600 min-h-[48px]"
+            >
+            <button 
+              type="button" 
+              onclick="togglePasswordVisibility('loginPassword', this)" 
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1.5 text-xs touch-btn"
+              tabindex="-1"
+            >
+              <i class="fa-regular fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <button 
+          type="submit" 
+          id="btnSubmitLogin"
+          class="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-extrabold text-sm tracking-wide shadow-lg shadow-orange-500/25 transition active:scale-[0.98] touch-btn flex items-center justify-center gap-2 min-h-[50px]"
+        >
+          <i class="fa-solid fa-bolt text-yellow-200"></i>
+          <span>INGRESAR AL SISTEMA</span>
+        </button>
+
+        <!-- ACCESO RÁPIDO DEMO -->
+        <div class="pt-2 text-center">
+          <button 
+            type="button" 
+            onclick="fillDemoCredentials()" 
+            class="text-[11px] text-slate-400 hover:text-orange-400 underline underline-offset-4 font-semibold transition"
+          >
+            Usar credenciales admin (admin@konta.app / Admin1234!)
+          </button>
+        </div>
+      </form>
+
+      <!-- ========================================================== -->
+      <!-- FORMULARIO 2: CREAR CUENTA -->
+      <!-- ========================================================== -->
+      <form id="formRegister" onsubmit="handleRegisterSubmit(event)" class="hidden space-y-4">
+        <div>
+          <label for="regNombre" class="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1.5">
+            <i class="fa-regular fa-id-badge text-slate-400"></i>
+            <span>Nombre o Nombre del Negocio</span>
+          </label>
+          <input 
+            type="text" 
+            id="regNombre" 
+            name="nombre" 
+            required 
+            placeholder="Ej: Sofía Gómez o Tu Tienda Online"
+            class="w-full px-4 py-3 bg-slate-950 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:border-orange-500 transition font-medium placeholder-slate-600 min-h-[48px]"
+          >
+        </div>
+
+        <div>
+          <label for="regEmail" class="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1.5">
+            <i class="fa-regular fa-envelope text-slate-400"></i>
+            <span>Correo Electrónico</span>
+          </label>
+          <input 
+            type="email" 
+            id="regEmail" 
+            name="email" 
+            required 
+            autocomplete="email"
+            placeholder="tu@negocio.com"
+            class="w-full px-4 py-3 bg-slate-950 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:border-orange-500 transition font-medium placeholder-slate-600 min-h-[48px]"
+          >
+        </div>
+
+        <div>
+          <label for="regPassword" class="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1.5">
+            <i class="fa-solid fa-lock text-slate-400"></i>
+            <span>Contraseña (mínimo 6 caracteres)</span>
+          </label>
+          <div class="relative">
+            <input 
+              type="password" 
+              id="regPassword" 
+              name="password" 
+              minlength="6"
+              required 
+              autocomplete="new-password"
+              placeholder="••••••••"
+              class="w-full pl-4 pr-11 py-3 bg-slate-950 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:border-orange-500 transition font-medium placeholder-slate-600 min-h-[48px]"
+            >
+            <button 
+              type="button" 
+              onclick="togglePasswordVisibility('regPassword', this)" 
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1.5 text-xs touch-btn"
+              tabindex="-1"
+            >
+              <i class="fa-regular fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label for="regPasswordConfirm" class="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1.5">
+            <i class="fa-solid fa-shield-check text-slate-400"></i>
+            <span>Confirmar Contraseña</span>
+          </label>
+          <div class="relative">
+            <input 
+              type="password" 
+              id="regPasswordConfirm" 
+              name="password_confirm" 
+              minlength="6"
+              required 
+              autocomplete="new-password"
+              placeholder="••••••••"
+              class="w-full pl-4 pr-11 py-3 bg-slate-950 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:border-orange-500 transition font-medium placeholder-slate-600 min-h-[48px]"
+            >
+            <button 
+              type="button" 
+              onclick="togglePasswordVisibility('regPasswordConfirm', this)" 
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1.5 text-xs touch-btn"
+              tabindex="-1"
+            >
+              <i class="fa-regular fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <button 
+          type="submit" 
+          id="btnSubmitRegister"
+          class="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-extrabold text-sm tracking-wide shadow-lg shadow-emerald-500/25 transition active:scale-[0.98] touch-btn flex items-center justify-center gap-2 min-h-[50px]"
+        >
+          <i class="fa-solid fa-rocket text-emerald-200"></i>
+          <span>CREAR CUENTA EN KONTA</span>
+        </button>
+      </form>
+
+    </div>
+
+    <!-- FOOTER INFORMATIVO -->
+    <div class="mt-6 text-center text-xs text-slate-500 space-y-1">
+      <p>Konta v2.0 • Sistema Multiusuario Seguro</p>
+      <p class="text-[11px] text-slate-600">Sesiones cifradas JWT en Cookies HTTP-Only</p>
+    </div>
+  </main>
+
+  <script>
+    // Alternar pestañas de autenticación
+    function switchAuthTab(mode) {
+      hideAlert();
+      const tabLogin = document.getElementById('tabBtnLogin');
+      const tabRegister = document.getElementById('tabBtnRegister');
+      const formLogin = document.getElementById('formLogin');
+      const formRegister = document.getElementById('formRegister');
+
+      if (mode === 'login') {
+        formLogin.classList.remove('hidden');
+        formRegister.classList.add('hidden');
+        tabLogin.className = 'py-2.5 rounded-xl bg-orange-500 text-white shadow-md transition-all duration-200 touch-btn flex items-center justify-center gap-2';
+        tabRegister.className = 'py-2.5 rounded-xl text-slate-400 hover:text-white transition-all duration-200 touch-btn flex items-center justify-center gap-2';
+      } else {
+        formLogin.classList.add('hidden');
+        formRegister.classList.remove('hidden');
+        tabRegister.className = 'py-2.5 rounded-xl bg-emerald-500 text-white shadow-md transition-all duration-200 touch-btn flex items-center justify-center gap-2';
+        tabLogin.className = 'py-2.5 rounded-xl text-slate-400 hover:text-white transition-all duration-200 touch-btn flex items-center justify-center gap-2';
+      }
+    }
+
+    // Toggle de visibilidad de contraseña
+    function togglePasswordVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      const icon = btn.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fa-regular fa-eye-slash';
+      } else {
+        input.type = 'password';
+        icon.className = 'fa-regular fa-eye';
+      }
+    }
+
+    // Rellenar credenciales demo
+    function fillDemoCredentials() {
+      document.getElementById('loginEmail').value = 'admin@konta.app';
+      document.getElementById('loginPassword').value = 'Admin1234!';
+      showAlert('Credenciales de administrador cargadas. Presiona "Ingresar al Sistema".', true);
+    }
+
+    // Alertas visuales
+    function showAlert(msg, isSuccess = false) {
+      const alertBox = document.getElementById('authAlert');
+      const icon = document.getElementById('authAlertIcon');
+      const msgBox = document.getElementById('authAlertMessage');
+
+      alertBox.className = `p-3.5 rounded-xl border text-xs font-semibold flex items-start gap-2.5 transition-all duration-300 ${
+        isSuccess 
+          ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300' 
+          : 'bg-rose-950/40 border-rose-500/40 text-rose-300'
+      }`;
+      icon.className = isSuccess 
+        ? 'fa-solid fa-circle-check text-emerald-400 text-base shrink-0 mt-0.5' 
+        : 'fa-solid fa-circle-exclamation text-rose-400 text-base shrink-0 mt-0.5';
+      
+      msgBox.textContent = msg;
+      alertBox.classList.remove('hidden');
+    }
+
+    function hideAlert() {
+      const alertBox = document.getElementById('authAlert');
+      alertBox.classList.add('hidden');
+    }
+
+    // Handler de Inicio de Sesión
+    async function handleLoginSubmit(e) {
+      e.preventDefault();
+      hideAlert();
+
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const btn = document.getElementById('btnSubmitLogin');
+
+      if (!email || !password) {
+        showAlert('Por favor completa todos los campos.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> <span>INGRESANDO...</span>';
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          showAlert('¡Acceso correcto! Redirigiendo...', true);
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 450);
+        } else {
+          showAlert(data.detail || 'Error al iniciar sesión. Verifica tus credenciales.');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-bolt text-yellow-200"></i> <span>INGRESAR AL SISTEMA</span>';
+        }
+      } catch (err) {
+        showAlert('No se pudo conectar con el servidor. Revisa tu conexión.');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-bolt text-yellow-200"></i> <span>INGRESAR AL SISTEMA</span>';
+      }
+    }
+
+    // Handler de Registro
+    async function handleRegisterSubmit(e) {
+      e.preventDefault();
+      hideAlert();
+
+      const nombre = document.getElementById('regNombre').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const passwordConfirm = document.getElementById('regPasswordConfirm').value;
+      const btn = document.getElementById('btnSubmitRegister');
+
+      if (!nombre || !email || !password || !passwordConfirm) {
+        showAlert('Por favor completa todos los campos de registro.');
+        return;
+      }
+
+      if (password !== passwordConfirm) {
+        showAlert('Las contraseñas ingresadas no coinciden.');
+        return;
+      }
+
+      if (password.length < 6) {
+        showAlert('La contraseña debe contener al menos 6 caracteres.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> <span>CREANDO CUENTA...</span>';
+
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nombre, email, password })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          showAlert('¡Cuenta creada con éxito! Ingresando a tu panel...', true);
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 500);
+        } else {
+          showAlert(data.detail || 'Error al crear la cuenta. Intenta nuevamente.');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-rocket text-emerald-200"></i> <span>CREAR CUENTA EN KONTA</span>';
+        }
+      } catch (err) {
+        showAlert('No se pudo conectar con el servidor. Revisa tu conexión.');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-rocket text-emerald-200"></i> <span>CREAR CUENTA EN KONTA</span>';
+      }
+    }
+  </script>
+</body>
+</html>

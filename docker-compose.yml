@@ -1,0 +1,25 @@
+services:
+  bona-app:
+    build: .
+    container_name: bona_ngrok        # <-- Tu app web ahora tiene este nombre
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/app/data
+      - ./app:/app/app
+    environment:
+      - TZ=America/Argentina/Buenos_Aires
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: bona_tunnel       # <-- Nombre único para el túnel (evita el choque)
+    restart: unless-stopped
+    command:
+      - "http"
+      - "--domain=surcharge-subtract-footer.ngrok-free.dev"
+      - "bona_ngrok:8080"
+    environment:
+      - NGROK_AUTHTOKEN=3Jw7Hf1rpR6WcsiIRp8RwQYbFwu_81ygTniqaiWkmRbLihVfD
+    depends_on:
+      - bona-app

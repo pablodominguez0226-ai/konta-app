@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="es" class="min-h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Konta | Gestión Ágil de Ventas & Flujo</title>
+  
+  <!-- Favicon con Isotipo K -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2225%22 fill=%22%23f97316%22/><path d=%22M30 24 v52 M30 50 l38 -26 M44 42 l26 34%22 stroke=%22white%22 stroke-width=%2212%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 fill=%22none%22/></svg>">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            orange: {
+              500: '#f97316',
+              600: '#ea580c',
+              700: '#c2410c'
+            },
+            emerald: {
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- FontAwesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .safe-bottom {
+      padding-bottom: calc(9rem + env(safe-area-inset-bottom, 1rem));
+    }
+    .touch-btn {
+      touch-action: manipulation;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-950 text-slate-100 antialiased selection:bg-orange-500 selection:text-white">
+
+  <!-- TOP HEADER CON IDENTIDAD KONTA Y SESIÓN DE USUARIO -->
+  <header class="sticky top-0 z-30 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-3.5 sm:px-5 py-2.5 flex items-center justify-between">
+    <!-- Logotipo y Nombre Konta -->
+    <div class="flex items-center gap-2.5">
+      <!-- Isotipo Geométrico K -->
+      <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-orange-500 via-amber-500 to-emerald-400 p-[1.5px] shadow-lg shadow-orange-500/20 shrink-0">
+        <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+          <svg class="w-5 h-5" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="22" y="18" width="14" height="64" rx="7" fill="#f97316"/>
+            <path d="M42 50 L68 24 C72 20 78 26 74 30 L53 51 Z" fill="#fb923c"/>
+            <path d="M44 46 L73 75 C77 79 71 85 67 81 L38 52 Z" fill="#10b981"/>
+          </svg>
+        </div>
+      </div>
+      <div>
+        <div class="flex items-center gap-1.5 leading-none">
+          <span class="font-black text-base sm:text-lg tracking-tight text-white">
+            Konta<span class="text-orange-500">.</span>
+          </span>
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        </div>
+        <span class="text-[9px] sm:text-[10px] text-slate-400 font-semibold block tracking-wider uppercase">Flujo Lumelí</span>
+      </div>
+    </div>
+
+    <!-- Usuario Conectado y Botón de Cerrar Sesión -->
+    <div class="flex items-center gap-2">
+      <!-- Acceso Directo a Panel Admin (Solo visible para super-administradores) -->
+      {% if user and user.rol == 'admin' %}
+      <a 
+        href="/admin" 
+        title="Acceso al Panel Master de Super-Administrador"
+        class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-indigo-950/70 hover:bg-indigo-900 border border-indigo-700/60 hover:border-indigo-500 text-indigo-300 hover:text-white text-xs font-bold transition active:scale-95 touch-btn shadow-md shadow-indigo-950/40"
+      >
+        <i class="fa-solid fa-crown text-amber-400 text-xs"></i>
+        <span>Admin</span>
+      </a>
+      {% endif %}
+
+      <!-- Badge de Usuario -->
+      <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs font-semibold text-slate-200">
+        <i class="fa-solid fa-circle-user text-orange-400 text-sm"></i>
+        <span class="max-w-[110px] sm:max-w-[150px] truncate" id="userDisplayName">
+          {{ user.nombre if user else 'Mi Cuenta' }}
+        </span>
+      </div>
+
+      <!-- Botón Visible de Cerrar Sesión -->
+      <button 
+        type="button" 
+        onclick="handleLogout()" 
+        title="Cerrar Sesión en Konta"
+        class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/60 hover:border-rose-700 text-rose-300 text-xs font-bold transition active:scale-95 touch-btn"
+      >
+        <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+        <span class="hidden sm:inline">Cerrar Sesión</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- CONTENIDO PRINCIPAL SCROLLABLE (MOBILE-FIRST CON PADDING INFERIOR) -->
+  <main class="flex-1 w-full max-w-2xl mx-auto p-4 pb-36 safe-bottom">
+    
+    <!-- ========================================================== -->
+    <!-- PESTAÑA 1: CARGA EXPRESS (POS CELULAR) -->
+    <!-- ========================================================== -->
+    <section id="tab-pos" class="tab-content space-y-4">
+      
+      <!-- Sub-selector: Venta vs Gasto -->
+      <div class="grid grid-cols-2 p-1 bg-slate-900 border border-slate-800 rounded-xl text-xs font-bold">
+        <button type="button" onclick="switchPosForm('venta')" id="btn-form-venta" class="py-2.5 rounded-lg bg-orange-500 text-white shadow-md transition flex items-center justify-center gap-1.5 touch-btn">
+          <i class="fa-solid fa-bolt text-yellow-200"></i>
+          <span>Nueva Venta</span>
+        </button>
+        <button type="button" onclick="switchPosForm('gasto')" id="btn-form-gasto" class="py-2.5 rounded-lg text-slate-400 hover:text-white transition flex items-center justify-center gap-1.5 touch-btn">
+          <i class="fa-solid fa-arrow-trend-down text-rose-400"></i>
+          <span>Nuevo Gasto</span>
+        </button>
+      </div>
+
+      <!-- FORMULARIO DE VENTA -->
+      <form id="formVenta" onsubmit="handleGuardarVenta(event)" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-xl">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-800/80">
+          <span class="text-xs font-extrabold uppercase text-orange-400 tracking-wider flex items-center gap-1.5">
+            <i class="fa-solid fa-cart-plus"></i> Carga Rápida de Venta
+          </span>
+          <span class="text-[10px] text-slate-400 font-medium">Auto-cálculo de Margen</span>
+        </div>
+
+        <!-- Producto (Texto libre) -->
+        <div>
+          <label class="block text-[11px] font-bold text-slate-300 mb-1">Producto</label>
+          <input type="text" id="vProducto" required placeholder="Ej: Termo Acero Inox 1L o Kit Limpieza" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:border-orange-500 font-medium placeholder-slate-600">
+        </div>
+
+        <!-- Cantidad, Costo Unitario, Precio Venta Unitario -->
+        <div class="grid grid-cols-3 gap-2.5">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-300 mb-1">Cantidad</label>
+            <input type="number" id="vCantidad" min="1" value="1" required oninput="calcMargenVenta()" class="w-full px-3 py-2 bg-slate-950 border border-slate-700/80 rounded-xl text-white text-center font-bold text-base focus:outline-none focus:border-orange-500">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-300 mb-1">Costo Unit. ($)</label>
+            <input type="number" step="0.01" min="0" id="vCostoUnit" required placeholder="0.00" oninput="calcMargenVenta()" class="w-full px-3 py-2 bg-slate-950 border border-slate-700/80 rounded-xl text-white font-bold text-base focus:outline-none focus:border-orange-500">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-300 mb-1">Precio Unit. ($)</label>
+            <input type="number" step="0.01" min="0" id="vPrecioUnit" required placeholder="0.00" oninput="calcMargenVenta()" class="w-full px-3 py-2 bg-slate-950 border border-slate-700/80 rounded-xl text-white font-bold text-base focus:outline-none focus:border-orange-500">
+          </div>
+        </div>
+
+        <!-- VISUALIZADOR DE MARGEN EN VIVO (MÉTODO LUMELÍ) -->
+        <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-between text-xs">
+          <div>
+            <div class="text-[10px] uppercase font-bold text-slate-400">Total a Cobrar</div>
+            <div class="text-xl font-black text-white" id="liveTotalCobrado">$ 0</div>
+          </div>
+          <div class="text-center">
+            <div class="text-[10px] uppercase font-bold text-slate-400">Reposición (CMV)</div>
+            <div class="text-sm font-bold text-slate-300" id="liveCostoRepo">$ 0</div>
+          </div>
+          <div class="text-right">
+            <div class="text-[10px] uppercase font-bold text-emerald-400">Ganancia Neta</div>
+            <div class="text-base font-extrabold text-emerald-400" id="liveMargenNeto">+$ 0</div>
+          </div>
+        </div>
+
+        <!-- Desplegables de Canal, Medio de Pago y Estado -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-300 mb-1">Canal de Venta</label>
+            <select id="vCanal" class="w-full px-3 py-2.5 bg-slate-950 border border-slate-700/80 rounded-xl text-white focus:outline-none focus:border-orange-500 font-medium">
+              <option value="Mercado Libre">Mercado Libre</option>
+              <option value="Instagram" selected>Instagram</option>
+              <option value="WhatsApp">WhatsApp</option>
+              <option value="TikTok">TikTok</option>
+              <option value="Venta Directa">Venta Directa</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-300 mb-1">Medio de Pago</label>
+            <select id="vMedioPago" class="w-full px-3 py-2.5 bg-slate-950 border border-slate-700/80 rounded-xl text-white focus:outline-none focus:border-orange-500 font-medium">
+              <option value="Mercado Pago" selected>Mercado Pago</option>
+              <option value="Transferencia Bancaria">Transferencia Bancaria</option>
+              <option value="Efectivo">Efectivo</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-300 mb-1">Estado</label>
+            <select id="vEstado" class="w-full px-3 py-2.5 bg-slate-950 border border-slate-700/80 rounded-xl text-white focus:outline-none focus:border-orange-500 font-medium">
+              <option value="Cobrado" selected>Cobrado</option>
+              <option value="Pendiente">Pendiente</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Cliente opcional -->
+        <div>
+          <label class="block text-[11px] font-bold text-slate-300 mb-1">Cliente (Opcional)</label>
+          <input type="text" id="vCliente" value="Consumidor Final" placeholder="Nombre o @usuario" class="w-full px-3 py-2 bg-slate-950 border border-slate-700/80 rounded-xl text-white text-xs focus:outline-none focus:border-orange-500">
+        </div>
+
+        <!-- BOTÓN GRANDE TÁCTIL: REGISTRAR VENTA -->
+        <button type="submit" id="btnSubmitVenta" class="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-extrabold text-sm tracking-wide shadow-lg shadow-orange-500/25 transition active:scale-[0.98] touch-btn flex items-center justify-center gap-2">
+          <span>REGISTRAR VENTA ⚡</span>
+        </button>
+      </form>
+
+      <!-- FORMULARIO DE GASTO / EGRESO -->
+      <form id="formGasto" onsubmit="handleGuardarGasto(event)" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-xl">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-800/80">
+          <span class="text-xs font-extrabold uppercase text-rose-400 tracking-wider flex items-center gap-1.5">
+            <i class="fa-solid fa-arrow-trend-down"></i> Registrar Egreso / Gasto
+          </span>
+          <span class="text-[10px] text-slate-400 font-medium">Impacto en Ganancia Limpia</span>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-300 mb-1">Categoría</label>
+          <select id="gCategoria" required class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:border-rose-500 font-medium">
+            <option value="Publicidad Meta/Ads">Publicidad Meta/Ads</option>
+            <option value="Compra de Stock/Importación">Compra de Stock/Importación</option>
+            <option value="Packaging">Packaging</option>
+            <option value="Flete/Cadetería">Flete/Cadetería</option>
+            <option value="Retiro Socio">Retiro Socio</option>
+            <option value="Otros">Otros</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-300 mb-1">Monto ($)</label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+            <input type="number" step="0.01" min="1" id="gMonto" required placeholder="0.00" class="w-full pl-8 pr-3.5 py-2.5 bg-slate-950 border border-slate-700/80 rounded-xl text-white font-bold text-base focus:outline-none focus:border-rose-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-300 mb-1">Descripción / Concepto</label>
+          <input type="text" id="gDescripcion" required placeholder="Ej: Pago de campaña Ads o insumos" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:border-rose-500 placeholder-slate-600">
+        </div>
+
+        <button type="submit" id="btnSubmitGasto" class="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-extrabold text-sm tracking-wide shadow-lg shadow-rose-600/25 transition active:scale-[0.98] touch-btn flex items-center justify-center gap-2">
+          <span>REGISTRAR GASTO 💸</span>
+        </button>
+      </form>
+
+    </section>
+
+    <!-- ========================================================== -->
+    <!-- PESTAÑA 2: MÉTRICAS Y FLUJO (ESTILO LUMELÍ) -->
+    <!-- ========================================================== -->
+    <section id="tab-metrics" class="tab-content hidden space-y-4">
+      <!-- HEADER DE MÉTRICAS -->
+      <div class="flex items-center justify-between pb-1">
+        <div>
+          <h2 class="text-lg font-black text-white tracking-tight flex items-center gap-2">
+            <i class="fa-solid fa-chart-pie text-orange-500"></i>
+            <span>Métricas & Flujo Lumelí</span>
+          </h2>
+          <p id="metricasSyncTime" class="text-[11px] text-slate-400">Monitoreo de rentabilidad y capital intocable</p>
+        </div>
+        <button id="btnRefreshMetricas" onclick="loadMetricas(true)" class="flex items-center gap-1.5 text-xs text-slate-300 hover:text-white px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-xl transition shadow-sm active:scale-95 touch-btn">
+          <i id="iconRefreshMetricas" class="fa-solid fa-rotate-right"></i>
+          <span>Actualizar</span>
+        </button>
+      </div>
+
+      <!-- TARJETAS DE KPIS PRINCIPALES -->
+      <div class="grid grid-cols-2 gap-3">
+        <!-- Facturación Total -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm relative overflow-hidden group hover:border-slate-700 transition">
+          <div class="text-[11px] font-bold text-slate-400 mb-1 flex items-center justify-between">
+            <span>Facturación Total</span>
+            <span class="p-1.5 rounded-lg bg-orange-500/10 text-orange-400">
+              <i class="fa-solid fa-cash-register text-xs"></i>
+            </span>
+          </div>
+          <div class="text-xl sm:text-2xl font-black text-white tracking-tight" id="kpiFacturacion">$ 0</div>
+          <div class="flex items-center justify-between text-[10px] text-slate-400 mt-2 pt-2 border-t border-slate-800/80">
+            <span id="kpiVentasCountBadge">0 ventas</span>
+            <span id="kpiTicketPromedio" class="text-orange-400 font-semibold">Tkt: $ 0</span>
+          </div>
+        </div>
+
+        <!-- Fondo de Reposición Intocable -->
+        <div class="bg-slate-900 border border-amber-500/20 bg-amber-950/10 rounded-2xl p-4 shadow-sm relative overflow-hidden group hover:border-amber-500/40 transition">
+          <div class="text-[11px] font-bold text-amber-400 mb-1 flex items-center justify-between">
+            <span>Fondo Reposición</span>
+            <span class="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
+              <i class="fa-solid fa-shield-halved text-xs"></i>
+            </span>
+          </div>
+          <div class="text-xl sm:text-2xl font-black text-amber-400 tracking-tight" id="kpiFondoRepo">$ 0</div>
+          <div class="flex items-center justify-between text-[10px] text-amber-400/80 mt-2 pt-2 border-t border-amber-500/20">
+            <span>Capital Intocable</span>
+            <span id="kpiRepoPct" class="font-bold">0% de ventas</span>
+          </div>
+        </div>
+
+        <!-- Ganancia Limpia Acumulada -->
+        <div class="bg-slate-900 border border-emerald-500/30 bg-emerald-950/20 rounded-2xl p-4 shadow-sm relative overflow-hidden group hover:border-emerald-500/50 transition">
+          <div class="text-[11px] font-bold text-emerald-300 mb-1 flex items-center justify-between">
+            <span>Ganancia Limpia</span>
+            <span class="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400">
+              <i class="fa-solid fa-trophy text-xs"></i>
+            </span>
+          </div>
+          <div class="text-xl sm:text-2xl font-black text-emerald-400 tracking-tight" id="kpiGananciaLimpia">$ 0</div>
+          <div class="flex items-center justify-between text-[10px] text-emerald-300/80 mt-2 pt-2 border-t border-emerald-500/20">
+            <span>Margen en Bolsillo</span>
+            <span id="kpiMargenNetoPct" class="font-bold text-emerald-400">0% margen</span>
+          </div>
+        </div>
+
+        <!-- Gastos y Retiros Totales -->
+        <div class="bg-slate-900 border border-rose-500/20 bg-rose-950/10 rounded-2xl p-4 shadow-sm relative overflow-hidden group hover:border-rose-500/40 transition">
+          <div class="text-[11px] font-bold text-rose-400 mb-1 flex items-center justify-between">
+            <span>Gastos y Retiros</span>
+            <span class="p-1.5 rounded-lg bg-rose-500/10 text-rose-400">
+              <i class="fa-solid fa-arrow-down-long text-xs"></i>
+            </span>
+          </div>
+          <div class="text-xl sm:text-2xl font-black text-rose-400 tracking-tight" id="kpiGastosTotales">$ 0</div>
+          <div class="flex items-center justify-between text-[10px] text-rose-400/80 mt-2 pt-2 border-t border-rose-500/20">
+            <span>Egresos Operativos</span>
+            <span id="kpiGastosPct" class="font-bold">0% de ventas</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- BARRA DE DISTRIBUCIÓN FINANCIERA (REGLA DE ORO LUMELÍ) -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
+        <div class="flex items-center justify-between text-xs">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-scale-balanced text-orange-400"></i>
+            <span class="font-extrabold text-white">Distribución de Ingresos (Método Lumelí)</span>
+          </div>
+          <span class="text-[10px] text-slate-400 font-medium">Cada peso que entra</span>
+        </div>
+
+        <!-- Barra Proporcional Segmentada -->
+        <div class="h-3 w-full bg-slate-950 rounded-full overflow-hidden flex border border-slate-800/80 p-0.5">
+          <div id="barReposicion" class="h-full bg-amber-400 rounded-l-full transition-all duration-500" style="width: 50%" title="Fondo de Reposición"></div>
+          <div id="barGastos" class="h-full bg-rose-500 transition-all duration-500" style="width: 25%" title="Gastos Operativos"></div>
+          <div id="barGanancia" class="h-full bg-emerald-500 rounded-r-full transition-all duration-500" style="width: 25%" title="Ganancia Neta Limpia"></div>
+        </div>
+
+        <!-- Leyenda / Píldoras informativas -->
+        <div class="grid grid-cols-3 gap-2 text-center text-[10px]">
+          <div class="p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300">
+            <div class="font-bold flex items-center justify-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Stock CMV
+            </div>
+            <div id="pctReposicion" class="font-black text-xs text-amber-400 mt-0.5">0%</div>
+          </div>
+          <div class="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300">
+            <div class="font-bold flex items-center justify-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Gastos/Ads
+            </div>
+            <div id="pctGastos" class="font-black text-xs text-rose-400 mt-0.5">0%</div>
+          </div>
+          <div class="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300">
+            <div class="font-bold flex items-center justify-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Bolsillo Real
+            </div>
+            <div id="pctGanancia" class="font-black text-xs text-emerald-400 mt-0.5">0%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GRÁFICOS INTERACTIVOS (CHART.JS) -->
+      <!-- Gráfico 1: Dona Ventas por Canal -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-lg space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-800/80">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block shadow-sm shadow-emerald-400/50"></span>
+              <span class="text-xs sm:text-sm font-extrabold text-white">Ventas por Canal</span>
+            </div>
+            <p class="text-[10px] text-slate-400 mt-0.5">Participación sobre facturación cobrada</p>
+          </div>
+          <span id="metricasTotalCanales" class="text-xs font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md">$ 0</span>
+        </div>
+
+        <div class="relative h-56 sm:h-60 w-full flex items-center justify-center">
+          <canvas id="chartCanales"></canvas>
+        </div>
+
+        <!-- Detalle interactivo / desglose por canal debajo de la dona -->
+        <div id="canalesBreakdown" class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-slate-800/60 text-xs">
+          <!-- Generado dinámicamente con badges de porcentaje y montos -->
+        </div>
+      </div>
+
+      <!-- Gráfico 2: Barras Facturación Reciente -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-lg space-y-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2 border-b border-slate-800/80">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-orange-500 inline-block shadow-sm shadow-orange-500/50"></span>
+              <span class="text-xs sm:text-sm font-extrabold text-white">Facturación Reciente</span>
+            </div>
+            <p class="text-[10px] text-slate-400 mt-0.5">Ingresos diarios cobrados (últimos 7 días)</p>
+          </div>
+          <div class="flex items-center gap-2 self-start sm:self-auto">
+            <span id="metricasTotalSemana" class="px-2 py-0.5 rounded-md bg-orange-500/10 border border-orange-500/20 text-[10px] font-bold text-orange-400">
+              Total 7d: $ 0
+            </span>
+            <span id="metricasPromedioDia" class="px-2 py-0.5 rounded-md bg-slate-800 text-[10px] font-medium text-slate-300">
+              Prom: $ 0/d
+            </span>
+          </div>
+        </div>
+
+        <!-- Contenedor del gráfico garantizado y responsive -->
+        <div class="relative w-full h-64 sm:h-72 min-h-[250px] pt-1">
+          <canvas id="chartReciente"></canvas>
+        </div>
+
+        <div class="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-800/60">
+          <span class="flex items-center gap-1.5">
+            <i class="fa-solid fa-circle-info text-slate-500"></i>
+            Ventas en estado <strong class="text-emerald-400">Cobrado</strong>
+          </span>
+          <span id="metricasMejorDia" class="font-semibold text-slate-300"></span>
+        </div>
+      </div>
+
+      <!-- CONSEJO FINANCIERO LUMELÍ -->
+      <div class="p-3.5 rounded-2xl bg-gradient-to-r from-orange-500/10 via-slate-900 to-emerald-500/10 border border-slate-800 flex items-start gap-3 text-xs shadow-sm">
+        <div class="w-8 h-8 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center shrink-0 mt-0.5">
+          <i class="fa-solid fa-lightbulb"></i>
+        </div>
+        <div class="space-y-1">
+          <div class="font-extrabold text-white text-xs">Regla de Oro Lumelí en Konta</div>
+          <p class="text-[11px] text-slate-300 leading-relaxed">
+            Nunca toques el <strong class="text-amber-400">Fondo de Reposición</strong> para gastos corrientes ni retiros personales. Tu capital de recompra asegura la continuidad ininterrumpida de tu inventario.
+          </p>
+        </div>
+      </div>
+
+      <!-- ACCIONES RÁPIDAS -->
+      <div class="grid grid-cols-2 gap-2.5 pt-1">
+        <button onclick="switchTab('pos')" class="py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white font-bold text-xs flex items-center justify-center gap-2 transition active:scale-98 touch-btn">
+          <i class="fa-solid fa-bolt text-orange-400"></i>
+          <span>Nueva Venta</span>
+        </button>
+        <button onclick="switchTab('orders')" class="py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white font-bold text-xs flex items-center justify-center gap-2 transition active:scale-98 touch-btn">
+          <i class="fa-solid fa-receipt text-emerald-400"></i>
+          <span>Ver Órdenes</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ========================================================== -->
+    <!-- PESTAÑA 3: HISTORIAL Y GESTIÓN DE ÓRDENES -->
+    <!-- ========================================================== -->
+    <section id="tab-orders" class="tab-content hidden space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-black text-white tracking-tight flex items-center gap-2">
+          <i class="fa-solid fa-list-check text-orange-500"></i>
+          <span>Historial de Órdenes</span>
+        </h2>
+        <button onclick="loadOrdenes()" class="text-xs text-slate-400 hover:text-white px-2 py-1 bg-slate-900 border border-slate-800 rounded-lg touch-btn">
+          <i class="fa-solid fa-rotate-right"></i>
+        </button>
+      </div>
+
+      <!-- Listado de tarjetas de órdenes -->
+      <div class="space-y-2.5" id="ordenesList">
+        <!-- Renderizado dinámico vía JS -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- NAVEGACIÓN TÁCTIL INFERIOR (ESTILO APP NATIVA) -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 flex items-center justify-around px-2 py-2">
+    <!-- Pestaña 1 -->
+    <button onclick="switchTab('pos')" id="nav-btn-pos" class="nav-btn flex-1 flex flex-col items-center gap-1 py-1.5 text-orange-500 font-extrabold text-xs transition touch-btn">
+      <i class="fa-solid fa-bolt text-lg"></i>
+      <span>Carga Express</span>
+    </button>
+
+    <!-- Pestaña 2 -->
+    <button onclick="switchTab('metrics')" id="nav-btn-metrics" class="nav-btn flex-1 flex flex-col items-center gap-1 py-1.5 text-slate-400 hover:text-slate-200 font-semibold text-xs transition touch-btn">
+      <i class="fa-solid fa-chart-pie text-lg"></i>
+      <span>Métricas</span>
+    </button>
+
+    <!-- Pestaña 3 -->
+    <button onclick="switchTab('orders')" id="nav-btn-orders" class="nav-btn flex-1 flex flex-col items-center gap-1 py-1.5 text-slate-400 hover:text-slate-200 font-semibold text-xs transition touch-btn">
+      <i class="fa-solid fa-receipt text-lg"></i>
+      <span>Órdenes</span>
+    </button>
+  </nav>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none transition-all duration-300 opacity-0 -translate-y-3 max-w-sm w-full px-4">
+    <div id="toastBox" class="p-3.5 rounded-xl border shadow-2xl flex items-center gap-2.5 text-xs font-bold bg-slate-900 text-white border-slate-700"></div>
+  </div>
+
+  <script>
+    // Variables globales
+    let chartCanalesInstance = null;
+    let chartRecienteInstance = null;
+
+    // Toast helper
+    function showToast(msg, isSuccess = true) {
+      const toast = document.getElementById('toast');
+      const box = document.getElementById('toastBox');
+      box.className = `p-3.5 rounded-xl border shadow-2xl flex items-center gap-2.5 text-xs font-bold ${
+        isSuccess ? 'bg-slate-900 text-emerald-400 border-emerald-500/40' : 'bg-slate-900 text-rose-400 border-rose-500/40'
+      }`;
+      box.innerHTML = `<i class="fa-solid ${isSuccess ? 'fa-circle-check text-base' : 'fa-circle-exclamation text-base'}"></i> <span>${msg}</span>`;
+      toast.classList.remove('opacity-0', '-translate-y-3');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', '-translate-y-3');
+      }, 3000);
+    }
+
+    function formatMoney(num) {
+      return new Intl.NumberFormat('es-AR', {
+        style: 'currency',
+        currency: 'ARS',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(num || 0);
+    }
+
+    // Cerrar sesión
+    async function handleLogout() {
+      try {
+        await fetch('/api/auth/logout', { method: 'POST' });
+      } catch (e) {
+        console.error('Error al cerrar sesión:', e);
+      } finally {
+        window.location.href = '/login';
+      }
+    }
+
+    // Interceptor auxiliar para manejar sesiones vencidas (401)
+    async function apiFetch(url, options = {}) {
+      const res = await fetch(url, options);
+      if (res.status === 401) {
+        window.location.href = '/login';
+        throw new Error('Sesión expirada');
+      }
+      return res;
+    }
+
+    // Navegación de pestañas inferiores
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.className = 'nav-btn flex-1 flex flex-col items-center gap-1 py-1.5 text-slate-400 hover:text-slate-200 font-semibold text-xs transition touch-btn';
+      });
+
+      const targetTab = document.getElementById(`tab-${tab}`);
+      const targetNavBtn = document.getElementById(`nav-btn-${tab}`);
+      if (targetTab) targetTab.classList.remove('hidden');
+      if (targetNavBtn) targetNavBtn.className = 'nav-btn flex-1 flex flex-col items-center gap-1 py-1.5 text-orange-500 font-extrabold text-xs transition touch-btn';
+
+      window.scrollTo({ top: 0, behavior: 'instant' });
+
+      if (tab === 'metrics') {
+        loadMetricas();
+        requestAnimationFrame(() => {
+          if (chartCanalesInstance) chartCanalesInstance.resize();
+          if (chartRecienteInstance) chartRecienteInstance.resize();
+        });
+      } else if (tab === 'orders') {
+        loadOrdenes();
+      }
+    }
+
+    // Switch formulario Venta vs Gasto
+    function switchPosForm(type) {
+      const fVenta = document.getElementById('formVenta');
+      const fGasto = document.getElementById('formGasto');
+      const btnV = document.getElementById('btn-form-venta');
+      const btnG = document.getElementById('btn-form-gasto');
+
+      if (type === 'venta') {
+        fVenta.classList.remove('hidden');
+        fGasto.classList.add('hidden');
+        btnV.className = 'py-2.5 rounded-lg bg-orange-500 text-white shadow-md transition flex items-center justify-center gap-1.5 touch-btn';
+        btnG.className = 'py-2.5 rounded-lg text-slate-400 hover:text-white transition flex items-center justify-center gap-1.5 touch-btn';
+      } else {
+        fVenta.classList.add('hidden');
+        fGasto.classList.remove('hidden');
+        btnG.className = 'py-2.5 rounded-lg bg-rose-600 text-white shadow-md transition flex items-center justify-center gap-1.5 touch-btn';
+        btnV.className = 'py-2.5 rounded-lg text-slate-400 hover:text-white transition flex items-center justify-center gap-1.5 touch-btn';
+      }
+    }
+
+    // Auto-cálculo en vivo de margen antes de enviar
+    function calcMargenVenta() {
+      const cant = parseInt(document.getElementById('vCantidad').value) || 1;
+      const costo = parseFloat(document.getElementById('vCostoUnit').value) || 0;
+      const precio = parseFloat(document.getElementById('vPrecioUnit').value) || 0;
+
+      const total = cant * precio;
+      const repo = cant * costo;
+      const margen = total - repo;
+      const pct = total > 0 ? ((margen / total) * 100).toFixed(1) : 0;
+
+      document.getElementById('liveTotalCobrado').textContent = formatMoney(total);
+      document.getElementById('liveCostoRepo').textContent = formatMoney(repo);
+      
+      const liveMargenEl = document.getElementById('liveMargenNeto');
+      if (margen >= 0) {
+        liveMargenEl.className = 'text-base font-extrabold text-emerald-400';
+        liveMargenEl.textContent = `+${formatMoney(margen)} (${pct}%)`;
+      } else {
+        liveMargenEl.className = 'text-base font-extrabold text-rose-400';
+        liveMargenEl.textContent = `${formatMoney(margen)} (${pct}%)`;
+      }
+    }
+
+    // Guardar Venta
+    async function handleGuardarVenta(e) {
+      e.preventDefault();
+      const producto = document.getElementById('vProducto').value.trim();
+      const cantidad = parseInt(document.getElementById('vCantidad').value) || 1;
+      const costo = parseFloat(document.getElementById('vCostoUnit').value) || 0;
+      const precio = parseFloat(document.getElementById('vPrecioUnit').value) || 0;
+      const canal = document.getElementById('vCanal').value;
+      const medio_pago = document.getElementById('vMedioPago').value;
+      const estado = document.getElementById('vEstado').value;
+      const cliente = document.getElementById('vCliente').value.trim() || 'Consumidor Final';
+
+      const btn = document.getElementById('btnSubmitVenta');
+      btn.disabled = true;
+      btn.textContent = 'REGISTRANDO EN KONTA...';
+
+      try {
+        const res = await apiFetch('/api/venta', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            cliente, canal, producto, cantidad,
+            costo_unitario: costo,
+            precio_unitario: precio,
+            medio_pago, estado
+          })
+        });
+
+        if (res.ok) {
+          showToast('¡Venta registrada con éxito! ⚡', true);
+          document.getElementById('formVenta').reset();
+          document.getElementById('vCantidad').value = '1';
+          document.getElementById('vCliente').value = 'Consumidor Final';
+          calcMargenVenta();
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          showToast(errData.detail || 'Error al registrar venta', false);
+        }
+      } catch (err) {
+        if (err.message !== 'Sesión expirada') {
+          showToast('Error de conexión', false);
+        }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'REGISTRAR VENTA ⚡';
+      }
+    }
+
+    // Guardar Gasto
+    async function handleGuardarGasto(e) {
+      e.preventDefault();
+      const categoria = document.getElementById('gCategoria').value;
+      const monto = parseFloat(document.getElementById('gMonto').value) || 0;
+      const descripcion = document.getElementById('gDescripcion').value.trim();
+
+      const btn = document.getElementById('btnSubmitGasto');
+      btn.disabled = true;
+      btn.textContent = 'REGISTRANDO EN KONTA...';
+
+      try {
+        const res = await apiFetch('/api/gasto', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ categoria, monto, descripcion })
+        });
+
+        if (res.ok) {
+          showToast('Gasto operativo registrado 💸', true);
+          document.getElementById('formGasto').reset();
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          showToast(errData.detail || 'Error al registrar gasto', false);
+        }
+      } catch (err) {
+        if (err.message !== 'Sesión expirada') {
+          showToast('Error de conexión', false);
+        }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'REGISTRAR GASTO 💸';
+      }
+    }
+
+    // Cargar Métricas y Flujo Lumelí
+    async function loadMetricas(forceToast = false) {
+      const btnRefresh = document.getElementById('btnRefreshMetricas');
+      const iconRefresh = document.getElementById('iconRefreshMetricas');
+      if (iconRefresh) iconRefresh.classList.add('fa-spin');
+
+      try {
+        const res = await apiFetch('/api/metricas');
+        if (!res.ok) throw new Error('Error en endpoint /api/metricas');
+        const data = await res.json();
+
+        const facturacion = Number(data.facturacion_total) || 0;
+        const reposicion = Number(data.fondo_reposicion) || 0;
+        const ganancia = Number(data.ganancia_limpia) || 0;
+        const gastos = Number(data.gastos_totales) || 0;
+        const ventasCount = parseInt(data.ventas_count) || 0;
+
+        // Formatear KPIs principales
+        document.getElementById('kpiFacturacion').textContent = formatMoney(facturacion);
+        document.getElementById('kpiFondoRepo').textContent = formatMoney(reposicion);
+        document.getElementById('kpiGananciaLimpia').textContent = formatMoney(ganancia);
+        document.getElementById('kpiGastosTotales').textContent = formatMoney(gastos);
+
+        // Sub-indicadores adicionales
+        const tktProm = ventasCount > 0 ? Math.round(facturacion / ventasCount) : 0;
+        const pctRepo = facturacion > 0 ? ((reposicion / facturacion) * 100).toFixed(1) : 0;
+        const pctGanancia = facturacion > 0 ? ((ganancia / facturacion) * 100).toFixed(1) : 0;
+        const pctGastos = facturacion > 0 ? ((gastos / facturacion) * 100).toFixed(1) : 0;
+
+        const badgeVentas = document.getElementById('kpiVentasCountBadge');
+        if (badgeVentas) badgeVentas.textContent = `${ventasCount} cobradas`;
+
+        const badgeTicket = document.getElementById('kpiTicketPromedio');
+        if (badgeTicket) badgeTicket.textContent = `Tkt: ${formatMoney(tktProm)}`;
+
+        const badgeRepoPct = document.getElementById('kpiRepoPct');
+        if (badgeRepoPct) badgeRepoPct.textContent = `${pctRepo}% de ventas`;
+
+        const badgeMargenPct = document.getElementById('kpiMargenNetoPct');
+        if (badgeMargenPct) badgeMargenPct.textContent = `${pctGanancia}% margen`;
+
+        const badgeGastosPct = document.getElementById('kpiGastosPct');
+        if (badgeGastosPct) badgeGastosPct.textContent = `${pctGastos}% de ventas`;
+
+        // Barra de Distribución Financiera Lumelí
+        updateFlujoLumeliBar(facturacion, reposicion, gastos, ganancia);
+
+        // Renderizado de gráficos interactivos
+        renderChartCanales(data.distribucion_canal);
+        renderChartReciente(data.facturacion_reciente);
+
+        // Timestamp de sincronización
+        const timeEl = document.getElementById('metricasSyncTime');
+        if (timeEl) {
+          const now = new Date();
+          const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          timeEl.textContent = `Actualizado: ${timeStr} • Datos en vivo Konta`;
+        }
+
+        if (forceToast) {
+          showToast('Métricas actualizadas 📊', true);
+        }
+      } catch (err) {
+        if (err.message !== 'Sesión expirada') {
+          console.error('Error al cargar métricas:', err);
+          if (forceToast) {
+            showToast('Error al actualizar métricas', false);
+          }
+        }
+      } finally {
+        if (iconRefresh) {
+          setTimeout(() => iconRefresh.classList.remove('fa-spin'), 350);
+        }
+      }
+    }
+
+    // Actualizar Barra de Distribución Lumelí
+    function updateFlujoLumeliBar(facturacion, reposicion, gastos, ganancia) {
+      const barRepo = document.getElementById('barReposicion');
+      const barGastos = document.getElementById('barGastos');
+      const barGanancia = document.getElementById('barGanancia');
+      const pctRepoEl = document.getElementById('pctReposicion');
+      const pctGastosEl = document.getElementById('pctGastos');
+      const pctGananciaEl = document.getElementById('pctGanancia');
+
+      if (!barRepo || !barGastos || !barGanancia) return;
+
+      const totalCalculado = reposicion + gastos + Math.max(0, ganancia);
+      const base = totalCalculado > 0 ? totalCalculado : (facturacion > 0 ? facturacion : 1);
+
+      const pRepo = ((reposicion / base) * 100).toFixed(1);
+      const pGastos = ((gastos / base) * 100).toFixed(1);
+      const pGanancia = ((Math.max(0, ganancia) / base) * 100).toFixed(1);
+
+      barRepo.style.width = `${pRepo}%`;
+      barGastos.style.width = `${pGastos}%`;
+      barGanancia.style.width = `${pGanancia}%`;
+
+      if (pctRepoEl) pctRepoEl.textContent = `${pRepo}%`;
+      if (pctGastosEl) pctGastosEl.textContent = `${pGastos}%`;
+      if (pctGananciaEl) pctGananciaEl.textContent = `${pGanancia}%`;
+    }
+
+    // Gráfico de Canales (Doughnut)
+    function renderChartCanales(dist) {
+      const ctx = document.getElementById('chartCanales');
+      if (!ctx) return;
+      if (chartCanalesInstance) chartCanalesInstance.destroy();
+
+      dist = dist || {};
+      const labels = Object.keys(dist);
+      const values = Object.values(dist).map(v => Number(v) || 0);
+      const totalCanales = values.reduce((sum, v) => sum + v, 0);
+
+      // Actualizar badge de total
+      const totalCanalesEl = document.getElementById('metricasTotalCanales');
+      if (totalCanalesEl) totalCanalesEl.textContent = formatMoney(totalCanales);
+
+      // Renderizar breakdown cards debajo de la dona
+      const breakdownEl = document.getElementById('canalesBreakdown');
+      if (breakdownEl) {
+        breakdownEl.innerHTML = '';
+        labels.forEach(canal => {
+          const val = dist[canal] || 0;
+          const pct = totalCanales > 0 ? ((val / totalCanales) * 100).toFixed(1) : 0;
+          let icon = 'fa-solid fa-tag';
+          let color = '#f97316';
+          if (canal === 'Mercado Libre') { icon = 'fa-solid fa-bag-shopping'; color = '#f59e0b'; }
+          else if (canal === 'Instagram') { icon = 'fa-brands fa-instagram'; color = '#ec4899'; }
+          else if (canal === 'WhatsApp') { icon = 'fa-brands fa-whatsapp'; color = '#22c55e'; }
+          else if (canal === 'TikTok') { icon = 'fa-brands fa-tiktok'; color = '#06b6d4'; }
+          else if (canal === 'Venta Directa') { icon = 'fa-solid fa-store'; color = '#8b5cf6'; }
+
+          const item = document.createElement('div');
+          item.className = 'flex items-center justify-between p-2 rounded-xl bg-slate-950/70 border border-slate-800/80';
+          item.innerHTML = `
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="w-6 h-6 rounded-lg flex items-center justify-center text-xs shrink-0" style="background-color: ${color}20; color: ${color};">
+                <i class="${icon}"></i>
+              </span>
+              <span class="font-semibold text-slate-300 truncate">${canal}</span>
+            </div>
+            <div class="text-right shrink-0">
+              <div class="font-bold text-white">${formatMoney(val)}</div>
+              <div class="text-[10px] text-slate-400 font-semibold">${pct}%</div>
+            </div>
+          `;
+          breakdownEl.appendChild(item);
+        });
+      }
+
+      const colorsMap = {
+        'Mercado Libre': '#f59e0b',
+        'Instagram': '#ec4899',
+        'WhatsApp': '#22c55e',
+        'TikTok': '#06b6d4',
+        'Venta Directa': '#8b5cf6'
+      };
+      const bgColors = labels.map(l => colorsMap[l] || '#f97316');
+
+      const hasData = totalCanales > 0;
+      const chartLabels = hasData ? labels : ['Sin ventas registradas'];
+      const chartData = hasData ? values : [1];
+      const chartColors = hasData ? bgColors : ['#334155'];
+
+      chartCanalesInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: chartLabels,
+          datasets: [{
+            data: chartData,
+            backgroundColor: chartColors,
+            borderColor: '#0f172a',
+            borderWidth: 3,
+            hoverOffset: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              enabled: hasData,
+              backgroundColor: '#0f172a',
+              borderColor: '#334155',
+              borderWidth: 1,
+              titleColor: '#f8fafc',
+              bodyColor: '#38bdf8',
+              padding: 10,
+              callbacks: {
+                label: (context) => {
+                  const val = context.raw || 0;
+                  const pct = totalCanales > 0 ? ((val / totalCanales) * 100).toFixed(1) : 0;
+                  return ` ${context.label}: ${formatMoney(val)} (${pct}%)`;
+                }
+              }
+            }
+          },
+          cutout: '70%'
+        }
+      });
+    }
+
+    // Gráfico de Facturación Reciente (Barras)
+    function renderChartReciente(reciente) {
+      const canvas = document.getElementById('chartReciente');
+      if (!canvas) return;
+      if (chartRecienteInstance) chartRecienteInstance.destroy();
+
+      reciente = reciente || [];
+      const labels = reciente.map(r => r.fecha);
+      const values = reciente.map(r => Number(r.total) || 0);
+
+      // Calcular métricas auxiliares de la semana
+      const totalSemana = values.reduce((acc, curr) => acc + curr, 0);
+      const promDia = Math.round(totalSemana / (values.length || 7));
+      let mejorDia = { fecha: '-', total: 0 };
+      reciente.forEach(r => {
+        if (Number(r.total) > mejorDia.total) {
+          mejorDia = { fecha: r.fecha, total: Number(r.total) };
+        }
+      });
+
+      const totalSemanaEl = document.getElementById('metricasTotalSemana');
+      if (totalSemanaEl) totalSemanaEl.textContent = `Total 7d: ${formatMoney(totalSemana)}`;
+
+      const promDiaEl = document.getElementById('metricasPromedioDia');
+      if (promDiaEl) promDiaEl.textContent = `Prom: ${formatMoney(promDia)}/d`;
+
+      const mejorDiaEl = document.getElementById('metricasMejorDia');
+      if (mejorDiaEl && mejorDia.total > 0) {
+        mejorDiaEl.innerHTML = `Pico semanal: <strong class="text-orange-400">${mejorDia.fecha} (${formatMoney(mejorDia.total)})</strong>`;
+      } else if (mejorDiaEl) {
+        mejorDiaEl.textContent = 'Sin ventas registradas en los últimos 7 días';
+      }
+
+      const ctx = canvas.getContext('2d');
+      const gradient = ctx.createLinearGradient(0, 0, 0, 240);
+      gradient.addColorStop(0, 'rgba(249, 115, 22, 0.95)');
+      gradient.addColorStop(1, 'rgba(234, 88, 12, 0.25)');
+
+      const borderGradient = ctx.createLinearGradient(0, 0, 0, 240);
+      borderGradient.addColorStop(0, '#f97316');
+      borderGradient.addColorStop(1, 'rgba(249, 115, 22, 0.5)');
+
+      chartRecienteInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Facturado ($)',
+            data: values,
+            backgroundColor: gradient,
+            borderColor: borderGradient,
+            borderWidth: 1.5,
+            borderRadius: { topLeft: 8, topRight: 8, bottomLeft: 0, bottomRight: 0 },
+            borderSkipped: false,
+            maxBarThickness: 36
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#0f172a',
+              borderColor: '#334155',
+              borderWidth: 1,
+              titleColor: '#94a3b8',
+              bodyColor: '#f97316',
+              titleFont: { family: 'Plus Jakarta Sans', size: 11, weight: 'bold' },
+              bodyFont: { family: 'Plus Jakarta Sans', size: 13, weight: 'bold' },
+              padding: 10,
+              displayColors: false,
+              callbacks: {
+                title: (items) => `Día ${items[0].label}`,
+                label: (context) => `Facturado: ${formatMoney(context.raw)}`
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' } },
+              grid: { display: false }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: {
+                color: '#64748b',
+                font: { family: 'Plus Jakarta Sans', size: 10 },
+                callback: (val) => {
+                  if (val >= 1000000) return `$${(val / 1000000).toFixed(1)}M`;
+                  if (val >= 1000) return `$${Math.round(val / 1000)}k`;
+                  return `$${val}`;
+                }
+              },
+              grid: { color: 'rgba(255, 255, 255, 0.05)' }
+            }
+          }
+        }
+      });
+    }
+
+    // Cargar Órdenes
+    async function loadOrdenes() {
+      const container = document.getElementById('ordenesList');
+      if (!container) return;
+      container.innerHTML = '<div class="text-xs text-slate-500 py-6 text-center"><i class="fa-solid fa-spinner fa-spin"></i> Cargando órdenes de tu cuenta...</div>';
+
+      try {
+        const res = await apiFetch('/api/ordenes');
+        if (!res.ok) return;
+        const ordenes = await res.json();
+
+        if (ordenes.length === 0) {
+          container.innerHTML = '<div class="text-xs text-slate-500 py-8 text-center">No tienes órdenes registradas en tu cuenta.</div>';
+          return;
+        }
+
+        container.innerHTML = '';
+        ordenes.forEach(o => {
+          let badgeClass = 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+          if (o.estado === 'Pendiente') badgeClass = 'bg-amber-500/20 text-amber-400 border border-amber-500/30';
+          else if (o.estado === 'Cancelado') badgeClass = 'bg-rose-500/20 text-rose-400 border border-rose-500/30';
+
+          const card = document.createElement('div');
+          card.className = 'p-3.5 bg-slate-900 border border-slate-800 rounded-2xl space-y-2 text-xs shadow-sm';
+          card.innerHTML = `
+            <div class="flex items-center justify-between">
+              <div class="font-extrabold text-white text-sm">#${o.id} — ${o.producto}</div>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${badgeClass}">${o.estado}</span>
+            </div>
+
+            <div class="flex items-center justify-between text-slate-400 text-[11px]">
+              <span>${o.canal} • ${o.cliente}</span>
+              <span class="font-mono">${o.fecha.split(' ')[0]}</span>
+            </div>
+
+            <div class="p-2 bg-slate-950 rounded-xl flex items-center justify-between text-[11px] border border-slate-800/80">
+              <div>Cant: <strong class="text-white">${o.cantidad}</strong></div>
+              <div>Total: <strong class="text-white text-xs">${formatMoney(o.total_cobrado)}</strong></div>
+              <div class="text-emerald-400">Margen: <strong>+${formatMoney(o.margen_neto)}</strong></div>
+            </div>
+
+            <div class="flex items-center justify-between pt-1 text-[11px]">
+              <div class="text-slate-500">${o.medio_pago}</div>
+              <div class="flex items-center gap-1.5">
+                <!-- Cambiar estado rápido -->
+                <button onclick="cambiarEstado(${o.id}, 'Cobrado')" title="Marcar Cobrado" class="px-2 py-1 rounded bg-slate-800 hover:bg-emerald-500/20 text-emerald-400 transition font-bold touch-btn">
+                  Cobrado
+                </button>
+                <button onclick="cambiarEstado(${o.id}, 'Pendiente')" title="Marcar Pendiente" class="px-2 py-1 rounded bg-slate-800 hover:bg-amber-500/20 text-amber-400 transition font-bold touch-btn">
+                  Pendiente
+                </button>
+                <button onclick="cambiarEstado(${o.id}, 'Cancelado')" title="Marcar Cancelado" class="px-2 py-1 rounded bg-slate-800 hover:bg-rose-500/20 text-rose-400 transition font-bold touch-btn">
+                  Cancelado
+                </button>
+                <button onclick="eliminarOrden(${o.id})" title="Eliminar orden por error" class="w-7 h-7 rounded bg-slate-800 hover:bg-rose-600 text-slate-400 hover:text-white flex items-center justify-center transition touch-btn">
+                  <i class="fa-solid fa-trash text-xs"></i>
+                </button>
+              </div>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      } catch (err) {
+        if (err.message !== 'Sesión expirada') {
+          container.innerHTML = '<div class="text-xs text-rose-400 py-6 text-center">Error al cargar listado de órdenes.</div>';
+        }
+      }
+    }
+
+    // Cambiar estado de orden
+    async function cambiarEstado(id, nuevoEstado) {
+      try {
+        const res = await apiFetch(`/api/ordenes/${id}/estado`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ estado: nuevoEstado })
+        });
+        if (res.ok) {
+          showToast(`Orden #${id} actualizada a ${nuevoEstado}`, true);
+          loadOrdenes();
+        }
+      } catch (err) {
+        if (err.message !== 'Sesión expirada') {
+          showToast('Error al actualizar estado', false);
+        }
+      }
+    }
+
+    // Eliminar orden
+    async function eliminarOrden(id) {
+      if (!confirm(`¿Eliminar la orden #${id}?`)) return;
+      try {
+        const res = await apiFetch(`/api/ordenes/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          showToast(`Orden #${id} eliminada`, true);
+          loadOrdenes();
+        }
+      } catch (err) {
+        if (err.message !== 'Sesión expirada') {
+          showToast('Error al eliminar orden', false);
+        }
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      calcMargenVenta();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+# Archivos de credenciales y claves
+credentials.json
+app/credentials.json
+.env
+
+# Bases de datos SQLite
+*.db
+*.sqlite3
+data/
+app/data/
+
+# Caché de Python y contenedores
+__pycache__/
+*.py[cod]
+.venv/
